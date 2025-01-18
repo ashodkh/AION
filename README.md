@@ -2,6 +2,11 @@
 
 Polymathic's Large Omnimodal Model for Astronomy
 
+```bash
+from aion import AION
+
+model = AION.from_pretrained('/mnt/ceph/users/polymathic/aion/dec24/base')
+```
 
 ## Installation on Rusty
 
