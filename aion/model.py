@@ -73,7 +73,10 @@ class AION(FM):
         for mod, mask in target_mask.items():
             mask = mask.to(torch.bool).to(device)
             tensor =torch.zeros_like(mask).to(torch.long).to(device)
-            decoder_mod_dict[mod] = self.decoder_embeddings[mod].forward_embed({'tensor': tensor, 'target_mask': mask})
+            decoder_attention_mask = torch.zeros_like(mask).to(torch.bool).to(device)
+            decoder_mod_dict[mod] = self.decoder_embeddings[mod].forward_embed({'tensor': tensor, 
+                                                                                'target_mask': mask, 
+                                                                                'decoder_attention_mask': decoder_attention_mask})
         
         decoder_tokens, decoder_emb, decoder_mask, target_ids, decoder_attention_mask, decoder_mod_mask = self.forward_mask_decoder(decoder_mod_dict, num_decoder_tokens)
 
@@ -99,7 +102,7 @@ class AION(FM):
         Args:
             num_encoder_tokens (int, optional): Maximum number of encoder tokens. Defaults to 256.
         """
-        encoder_tokens, encoder_emb, encoder_mask, _ = self.embed_input(input_dict, mask=input_mask, num_encoder_tokens=num_encoder_tokens)
+        encoder_tokens, encoder_emb, encoder_mask, _ = self.embed_inputs(input_dict, mask=input_mask, num_encoder_tokens=num_encoder_tokens)
         return self._encode(encoder_tokens, encoder_emb, encoder_mask)
 
     def forward(self, 
@@ -121,7 +124,7 @@ class AION(FM):
             torch.Tensor: Output tensor of the model.
         """
         # Embedding inputs and targets 
-        encoder_tokens, encoder_emb, encoder_mask, _ = self.embed_input(input_dict, mask=input_mask, num_encoder_tokens=num_encoder_tokens)
+        encoder_tokens, encoder_emb, encoder_mask, _ = self.embed_inputs(input_dict, mask=input_mask, num_encoder_tokens=num_encoder_tokens)
         decoder_tokens, decoder_emb, decoder_mask, target_ids, decoder_attention_mask, decoder_mod_mask  = self.embed_targets(target_mask, num_decoder_tokens=num_decoder_tokens)
         
         # Run the encoder
@@ -130,7 +133,7 @@ class AION(FM):
     
         # Now, we compute the logits for the requested tokens and return them
         mod_logits = {}
-        for mod in target_mask.items():
+        for mod in target_mask.keys():
             idx = self.modality_info[mod]["id"]
             mod_logits[mod] = self.decoder_embeddings[mod].forward_logits(decoder_output[decoder_mod_mask == idx])
             
