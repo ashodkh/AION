@@ -1109,7 +1109,6 @@ def fm_xlarge_24e_24d_swiglu_qknorm_nobias(
     )
     return model
 
-@register_model
 def fm_xxlarge_24e_24d_swiglu_qknorm_nobias(
         encoder_embeddings: Dict[str, nn.Module],
         decoder_embeddings: Dict[str, nn.Module],
