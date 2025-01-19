@@ -40,6 +40,8 @@ class AION(FM):
         encoder_mod_dict = {}
         for mod, tensor in input_dict.items():
             tensor = tensor.to(torch.long).to(device)
+            if tensor.dim() == 1:
+                tensor = tensor.unsqueeze(1)
             input_mask = mask.get(mod, torch.zeros(tensor.shape[0], tensor.shape[1], dtype=torch.bool, device=device))
             if MODALITY_INFO[mod]['type']  == 'img':
                 assert tensor.shape[1] == self.encoder_embeddings[mod].num_patches, f"Expected size {self.encoder_embeddings[mod].num_patches} for modality {mod}, but got {tensor.shape[1]}"
