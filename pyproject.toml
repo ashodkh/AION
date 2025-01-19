@@ -25,5 +25,5 @@ dependencies = [
 ]
 
 [tool.setuptools]
-packages = ["aion"]
+packages = ["aion", "aion.fourm"]
 
