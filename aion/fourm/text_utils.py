@@ -18,18 +18,22 @@ def generate_sentinel_tokens(num=100, start_id=0):
 
     return tokens
 
+
 def generate_coord_tokens(bins=1000):
     tokens = []
     coords_str = ["xmin={}", "ymin={}", "xmax={}", "ymax={}"]
 
     for s in coords_str:
         for i in range(bins):
-            tokens.append(AddedToken(content=s.format(i), single_word=True, normalized=False))
+            tokens.append(
+                AddedToken(content=s.format(i), single_word=True, normalized=False)
+            )
 
     return tokens
 
+
 def generate_object_class_tokens(dataset="coco"):
-    with open(os.path.join(os.path.dirname(__file__), 'object_classes.json')) as f:
+    with open(os.path.join(os.path.dirname(__file__), "object_classes.json")) as f:
         object_classes = json.load(f)[dataset]
 
     tokens = [
@@ -41,32 +45,32 @@ def generate_object_class_tokens(dataset="coco"):
 
 
 def train_unified_wordpiece_tokenizer(
-        files,
-        vocab_size,
-        sentinel_tokens: List[Union[str, AddedToken]] = None,
-        coord_tokens: List[Union[str, AddedToken]] = None,
-        object_class_tokens: List[Union[str, AddedToken]] = None,
-        unk_token: Union[str, AddedToken] = "[UNK]",
-        pad_token: Union[str, AddedToken] = "[PAD]",
-        sos_token: Union[str, AddedToken] = "[SOS]",
-        eos_token: Union[str, AddedToken] = "[EOS]",
-        additional_special_tokens: List[Union[str, AddedToken]] = None,
-        min_frequency=0,
-        clean_text: bool = True,
-        handle_chinese_chars: bool = True,
-        strip_accents: Optional[bool] = None,
-        lowercase: bool = True,
-        wordpieces_prefix: str = "##",
-        show_progress=True,
+    files,
+    vocab_size,
+    sentinel_tokens: List[Union[str, AddedToken]] = None,
+    coord_tokens: List[Union[str, AddedToken]] = None,
+    object_class_tokens: List[Union[str, AddedToken]] = None,
+    unk_token: Union[str, AddedToken] = "[UNK]",
+    pad_token: Union[str, AddedToken] = "[PAD]",
+    sos_token: Union[str, AddedToken] = "[SOS]",
+    eos_token: Union[str, AddedToken] = "[EOS]",
+    additional_special_tokens: List[Union[str, AddedToken]] = None,
+    min_frequency=0,
+    clean_text: bool = True,
+    handle_chinese_chars: bool = True,
+    strip_accents: Optional[bool] = None,
+    lowercase: bool = True,
+    wordpieces_prefix: str = "##",
+    show_progress=True,
 ):
     tokenizer = Tokenizer(WordPiece(unk_token=str(unk_token)))
 
     tokenizer.normalizer = BertNormalizer(
-            clean_text=clean_text,
-            handle_chinese_chars=handle_chinese_chars,
-            strip_accents=strip_accents,
-            lowercase=lowercase,
-        )
+        clean_text=clean_text,
+        handle_chinese_chars=handle_chinese_chars,
+        strip_accents=strip_accents,
+        lowercase=lowercase,
+    )
     tokenizer.pre_tokenizer = BertPreTokenizer()
     tokenizer.decoder = decoders.WordPiece(prefix=wordpieces_prefix)
 
@@ -102,9 +106,14 @@ def train_unified_wordpiece_tokenizer(
 
 
 def get_sentinel_to_id_mapping(tokenizer, match_str="[S_"):
-    sentinel_tokens = {k: v for k, v in tokenizer.get_vocab().items() if k.startswith(match_str)}
+    sentinel_tokens = {
+        k: v for k, v in tokenizer.get_vocab().items() if k.startswith(match_str)
+    }
     # Extract the sentinel token id, the id is of the form "[S_0]", "[S_1]", etc.
-    sentinel_to_id = {int(k.split("_")[1][:-1]): v for k, v in sorted(sentinel_tokens.items(), key=lambda x:x[1])}
+    sentinel_to_id = {
+        int(k.split("_")[1][:-1]): v
+        for k, v in sorted(sentinel_tokens.items(), key=lambda x: x[1])
+    }
     return sentinel_to_id
 
 
