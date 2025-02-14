@@ -1,4 +1,4 @@
-# AION-1 : AstronomIcal Omnimodal Network 
+# AION-1 : AstronomIcal Omnimodal Network
 
 Polymathic's Large Omnimodal Model for Astronomy
 
