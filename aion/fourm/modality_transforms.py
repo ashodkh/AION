@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Optional, Tuple, List, Dict
+from typing import Optional, Tuple
 from abc import ABC, abstractmethod
 
 import numpy as np
@@ -19,7 +19,6 @@ import torch
 
 
 class AbstractTransform(ABC):
-
     @abstractmethod
     def load(self, sample):
         pass
@@ -29,8 +28,16 @@ class AbstractTransform(ABC):
         pass
 
     @abstractmethod
-    def image_augment(self, v, crop_coords: Tuple, flip: bool, orig_size: Tuple, target_size: Tuple,
-                      rand_aug_idx: Optional[int], resample_mode: str = None):
+    def image_augment(
+        self,
+        v,
+        crop_coords: Tuple,
+        flip: bool,
+        orig_size: Tuple,
+        target_size: Tuple,
+        rand_aug_idx: Optional[int],
+        resample_mode: str = None,
+    ):
         pass
 
     @abstractmethod
@@ -39,7 +46,6 @@ class AbstractTransform(ABC):
 
 
 class TokTransform(AbstractTransform):
-
     def __init__(self):
         pass
 
@@ -50,13 +56,22 @@ class TokTransform(AbstractTransform):
     def preprocess(self, sample):
         return sample
 
-    def image_augment(self, v, crop_coords: Tuple, flip: bool, orig_size: Tuple, target_size: Tuple,
-                      rand_aug_idx: Optional[int], resample_mode: str = None):
+    def image_augment(
+        self,
+        v,
+        crop_coords: Tuple,
+        flip: bool,
+        orig_size: Tuple,
+        target_size: Tuple,
+        rand_aug_idx: Optional[int],
+        resample_mode: str = None,
+    ):
         if rand_aug_idx is None:
-            raise ValueError("Crop settings / augmentation index are missing but a pre-tokenized modality is being used")
+            raise ValueError(
+                "Crop settings / augmentation index are missing but a pre-tokenized modality is being used"
+            )
         v = torch.tensor(v[rand_aug_idx])
         return v
 
     def postprocess(self, sample):
         return sample
-

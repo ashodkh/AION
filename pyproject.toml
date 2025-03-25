@@ -24,6 +24,12 @@ dependencies = [
     "vector-quantize-pytorch==1.14.30",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pre-commit",
+    "pytest",
+    "ruff",
+]
+
 [tool.setuptools]
 packages = ["aion", "aion.fourm"]
-
