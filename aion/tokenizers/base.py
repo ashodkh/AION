@@ -67,4 +67,4 @@ class QuantizedCodec(Codec):
         self, x: Float[torch.Tensor, " b c *input_shape"]
     ) -> Float[torch.Tensor, " b c1 *code_shape"]:
         embedding = super().encode(x)
-        return self.quantizer.quantize(embedding)
+        return self.quantizer.encode(embedding)
