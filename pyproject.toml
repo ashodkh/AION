@@ -33,3 +33,8 @@ dev = [
 
 [tool.setuptools]
 packages = ["aion", "aion.fourm"]
+
+[tool.ruff.lint]
+# Ignore space in shape notation for jaxtyping
+# See https://docs.kidger.site/jaxtyping/faq/#flake8-or-ruff-are-throwing-an-error
+ignore = ["F722"]
