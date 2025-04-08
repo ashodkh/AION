@@ -10,7 +10,7 @@ class Codec(ABC):
     """Abstract definition of a Codec.
 
     A codec embeds a specific type of data into a sequence of either
-    discrete tokens or continuous embedddings, and then decode it back.
+    discrete tokens or continuous embeddings, and then decode it back.
     """
 
     @property
