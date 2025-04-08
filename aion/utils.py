@@ -11,5 +11,5 @@ def range_compression(
 def reverse_range_compression(
     sample: torch.Tensor, div_factor: float | int = 0.01
 ) -> torch.Tensor:
-    """Undos arcsinh compression on each band of the input."""
+    """Undoes arcsinh compression on each band of the input."""
     return torch.sinh(sample / div_factor) * div_factor
