@@ -1,8 +1,8 @@
 import pytest
 import torch
 
-from aion.quantizers import FiniteScaleQuantizer
-from aion.tokenizers.image import MagViTAEImageCodec
+from aion.codecs.tokenizers.image import MagViTAEImageCodec
+from aion.codecs.quantizers import FiniteScaleQuantizer
 
 
 @pytest.mark.parametrize("n_bands", [3, 10])

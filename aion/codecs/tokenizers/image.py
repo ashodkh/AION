@@ -1,11 +1,11 @@
 import torch
 from jaxtyping import Float
 
-from aion.modules.magvit import MagVitAE
-from aion.modules.subsampler import SubsampledLinear
-from aion.quantizers import Quantizer
-from aion.tokenizers.base import QuantizedCodec
-from aion.utils import range_compression, reverse_range_compression
+from aion.codecs.modules.magvit import MagVitAE
+from aion.codecs.modules.subsampler import SubsampledLinear
+from aion.codecs.quantizers import Quantizer
+from aion.codecs.tokenizers.base import QuantizedCodec
+from aion.codecs.utils import range_compression, reverse_range_compression
 
 
 class AutoencoderImageCodec(QuantizedCodec):

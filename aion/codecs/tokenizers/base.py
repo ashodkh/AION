@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 import torch
 from jaxtyping import Float
 
-from aion.quantizers import Quantizer
+from aion.codecs.quantizers import Quantizer
 
 
 class Codec(ABC):
