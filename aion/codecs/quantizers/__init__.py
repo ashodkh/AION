@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 
 import torch
 from jaxtyping import Float, Integer
+from vector_quantize_pytorch import LFQ
 
 
 class Quantizer(torch.nn.Module, ABC):
@@ -186,3 +187,180 @@ class FiniteScaleQuantizer(Quantizer):
         codes = self.encode(z_e)
         codebook_usage = len(torch.unique(codes)) / self.codebook_size
         return z_q, torch.zeros([]), codebook_usage
+
+
+class LucidrainsLFQ(Quantizer):
+    def __init__(
+        self,
+        dim: int | None = None,
+        codebook_size: int | None = None,
+        inv_temperature: float = 100.0,
+        entropy_loss_weight: float = 0.1,
+        commitment_loss_weight: float = 0.25,
+        diversity_gamma: float = 1.0,
+        num_codebooks: int = 1,
+        keep_num_codebooks_dim: bool | None = None,
+        codebook_scale: float = 1.0,
+        frac_per_sample_entropy: float = 1.0,
+        use_code_agnostic_commit_loss: bool = False,
+        projection_has_bias: bool = True,
+        soft_clamp_input_value: bool | None = None,
+        cosine_sim_project_in: bool = False,
+        cosine_sim_project_in_scale: float | None = None,
+    ):
+        """Lookup Free Quantizer (LFQ) from the MagVITv2 paper
+        https://arxiv.org/abs/2310.05737
+
+        Following the implementation from vector-quantize-pytorch
+        """
+        super().__init__()
+        self._inverse_temperature = inv_temperature
+        self._quantizer = LFQ(
+            dim=dim,
+            codebook_size=codebook_size,
+            entropy_loss_weight=entropy_loss_weight,
+            commitment_loss_weight=commitment_loss_weight,
+            diversity_gamma=diversity_gamma,
+            num_codebooks=num_codebooks,
+            keep_num_codebooks_dim=keep_num_codebooks_dim,
+            codebook_scale=codebook_scale,
+            frac_per_sample_entropy=frac_per_sample_entropy,
+            use_code_agnostic_commit_loss=use_code_agnostic_commit_loss,
+            projection_has_bias=projection_has_bias,
+            soft_clamp_input_value=soft_clamp_input_value,
+            cosine_sim_project_in=cosine_sim_project_in,
+            cosine_sim_project_in_scale=cosine_sim_project_in_scale,
+        )
+
+    def forward(
+        self, z_e: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Performs a forward pass through the vector quantizer.
+        Args:
+            z_e: Tensor (B, C, ...)
+                The input tensor to be quantized.
+        Returns:
+            z_q: Tensor
+                The quantized tensor.
+            loss: Tensor
+                The embedding loss for the quantization.
+            codebook_usage: Tensor
+                The fraction of codes used in the codebook.
+        """
+        # In cases where we only have a sequence, we need to move the sequence dimension to the last dimension
+        # For compatibility with the upstream quantizer
+        if len(z_e.shape) == 3:
+            z_e = z_e.movedim(1, -1)
+        z_q, indices, aux_loss = self._quantizer(
+            z_e, inv_temperature=self._inverse_temperature
+        )
+        codebook_usage = indices.unique().numel() / self.codebook_size
+        if len(z_q.shape) == 3:
+            z_q = z_q.movedim(-1, 1)
+        return z_q, aux_loss, torch.tensor(codebook_usage)
+
+    def quantize(self, z: torch.Tensor) -> torch.Tensor:
+        """Quantizes the input tensor z, returns the corresponding
+        codebook index.
+        """
+        return self.encode(z)
+
+    def encode(self, z: torch.Tensor) -> torch.Tensor:
+        """Encodes the input tensor z, returns the corresponding
+        codebook index.
+        """
+        # In cases where we only have a sequence, we need to move the sequence dimension to the last dimension
+        # For compatibility with the upstream quantizer
+        if len(z.shape) == 3:
+            z = z.movedim(1, -1)
+        z_q, indices, aux_loss = self._quantizer(
+            z, inv_temperature=self._inverse_temperature
+        )
+        return indices
+
+    def reconstruct(self, codes: torch.Tensor) -> torch.Tensor:
+        """Decodes the input code index into corresponding codebook entry of
+        dimension (embedding_dim).
+        """
+        z = self._quantizer.indices_to_codes(codes)
+        # For compatibility with the upstream quantizer, we need to move the last dimension to the sequence dimension
+        if len(z.shape) == 3:
+            z = z.movedim(-1, 1)
+        return z
+
+    @property
+    def codebook_size(self) -> int:
+        """Returns the size of the codebook."""
+        return len(self._quantizer.codebook)
+
+    @property
+    def embedding_dim(self) -> int:
+        """Returns the dimension of the codebook entries."""
+        return self._quantizer.codebook_dim
+
+
+class ScalarLinearQuantizer(Quantizer):
+    """A simple non-adaptive quantizer which will encode scalars by binning
+    on fixed histogram in the specified range.
+    """
+
+    def __init__(self, codebook_size: int, range: tuple[float, float]):
+        super().__init__()
+        self.register_buffer(
+            "buckets", torch.linspace(range[0], range[1], codebook_size)
+        )
+
+    def forward(
+        self, z_e: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Performs a forward pass through the vector quantizer.
+        Args:
+            z_e: Tensor (B, C, ...)
+                The input tensor to be quantized.
+        Returns:
+            z_q: Tensor
+                The quantized tensor.
+            loss: Tensor
+                The embedding loss for the quantization.
+            codebook_usage: Tensor
+                The fraction of codes used in the codebook.
+        """
+        indices = self.encode(z_e)
+        z_q = self.decode(indices)
+        codebook_usage = indices.unique().numel() / self.codebook_size
+        return z_q, torch.tensor(0), torch.tensor(codebook_usage)
+
+    def quantize(self, z: torch.Tensor) -> torch.Tensor:
+        """Quantizes the input tensor z, returns the corresponding
+        codebook index.
+        """
+        return self.reconstruct(self.encode(z))
+
+    def encode(self, z: torch.Tensor) -> torch.Tensor:
+        """Encodes the input tensor z, returns the corresponding
+        codebook index.
+        """
+        return torch.clamp(
+            torch.bucketize(z, self.buckets, out_int32=True), 0, self.codebook_size - 1
+        )
+
+    def reconstruct(self, codes: torch.Tensor) -> torch.Tensor:
+        """Decodes the input code index into corresponding codebook entry of
+        dimension (embedding_dim).
+        """
+        return self.buckets[codes]
+
+    @property
+    def codebook_size(self) -> int:
+        """Returns the size of the codebook."""
+        return len(self.buckets)
+
+    @property
+    def codebook(self) -> torch.Tensor:
+        """Returns the codebook."""
+        return self.decode(torch.arange(self.codebook_size))
+
+    @property
+    def embedding_dim(self) -> int:
+        """Returns the dimension of the codebook entries."""
+        return 1
