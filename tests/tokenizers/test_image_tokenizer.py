@@ -2,7 +2,7 @@ import pytest
 import torch
 
 from aion.codecs.tokenizers.image import MagViTAEImageCodec
-from aion.codecs.quantizers import FiniteScaleQuantizer
+from aion.codecs.quantizers import FiniteScalarQuantizer
 
 
 @pytest.mark.parametrize("n_bands", [3, 10])
@@ -14,7 +14,7 @@ def test_magvit_image_tokenizer(
 ):
     tokenizer = MagViTAEImageCodec(
         n_bands=n_bands,
-        quantizer=FiniteScaleQuantizer(levels=[1] * embedding_dim),
+        quantizer=FiniteScalarQuantizer(levels=[1] * embedding_dim),
         hidden_dims=hidden_dims,
         multisurvey_projection_dims=multisurvey_projection_dims,
         n_compressions=2,
