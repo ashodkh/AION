@@ -1,5 +1,5 @@
 import torch
-from jaxtyping import Float
+from jaxtyping import Float, Bool
 
 from aion.codecs.modules.magvit import MagVitAE
 from aion.codecs.modules.subsampler import SubsampledLinear
@@ -61,11 +61,11 @@ class AutoencoderImageCodec(QuantizedCodec):
         return x
 
     def _encode(
-        self, x: Float[torch.Tensor, " b {self.n_bands} w h"]
+        self,
+        x: Float[torch.Tensor, " b {self.n_bands} w h"],
+        channel_mask: Bool[torch.Tensor, " b {self.n_bands}"],
     ) -> Float[torch.Tensor, " b c1 w1 h1"]:
         x = self._preprocess_sample(x)
-        batch_size = x.shape[0]
-        channel_mask = torch.zeros((batch_size, self.n_bands), device=x.device)
         x = self.subsample_in(x, channel_mask)
         h = self.encoder(x)
         h = self.pre_quant_proj(h)
