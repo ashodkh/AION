@@ -25,7 +25,41 @@ def test_magvit_image_tokenizer(
     )
     batch_size = 4
     random_input = torch.randn(batch_size, n_bands, 96, 96)
-    encoded = tokenizer.encode(random_input)
+    channel_mask = torch.ones(batch_size, n_bands)
+    encoded = tokenizer.encode(random_input, channel_mask)
     assert encoded.shape == (batch_size, 24, 24)
     decoded = tokenizer.decode(encoded)
     assert decoded.shape == random_input.shape
+
+
+def test_previous_predictions():
+    quantizer = FiniteScalarQuantizer(levels=[7, 5, 5, 5, 5])
+    codec = MagViTAEImageCodec(
+        embedding_dim=5,
+        hidden_dims=512,
+        mult_factor=10.0,
+        multisurvey_projection_dims=54,
+        n_bands=9,
+        n_compressions=2,
+        num_consecutive=4,
+        range_compression_factor=0.01,
+        quantizer=quantizer,
+    )
+
+    codec.model.load_state_dict(torch.load("new_model.pt"))
+    subsample_layers_checkpoints = torch.load("image_tokenizer_checkpoints.pt")
+    codec.subsample_in.load_state_dict(subsample_layers_checkpoints["subsample_in"])
+    codec.subsample_out.load_state_dict(subsample_layers_checkpoints["subsample_out"])
+    codec.pre_quant_proj.load_state_dict(subsample_layers_checkpoints["pre_quant_proj"])
+    codec.post_quant_proj.load_state_dict(
+        subsample_layers_checkpoints["post_quant_proj"]
+    )
+
+    input_batch = torch.load("image_codec_test_input.pt")
+    reference_output = torch.load("image_codec_test_output.pt")
+
+    with torch.no_grad():
+        output = codec.encode(
+            input_batch["image"]["array"], input_batch["image"]["channel_mask"]
+        )
+        assert torch.allclose(output, reference_output)
