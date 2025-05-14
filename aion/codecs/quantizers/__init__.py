@@ -42,7 +42,7 @@ class Quantizer(torch.nn.Module, ABC):
         raise NotImplementedError
 
 
-class FiniteScaleQuantizer(Quantizer):
+class FiniteScalarQuantizer(Quantizer):
     def __init__(
         self,
         levels: list[int],
