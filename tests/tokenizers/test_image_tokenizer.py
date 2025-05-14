@@ -46,15 +46,7 @@ def test_previous_predictions():
         quantizer=quantizer,
     )
 
-    codec.model.load_state_dict(torch.load("new_model.pt"))
-    subsample_layers_checkpoints = torch.load("image_tokenizer_checkpoints.pt")
-    codec.subsample_in.load_state_dict(subsample_layers_checkpoints["subsample_in"])
-    codec.subsample_out.load_state_dict(subsample_layers_checkpoints["subsample_out"])
-    codec.pre_quant_proj.load_state_dict(subsample_layers_checkpoints["pre_quant_proj"])
-    codec.post_quant_proj.load_state_dict(
-        subsample_layers_checkpoints["post_quant_proj"]
-    )
-
+    codec.load_state_dict(torch.load("image_codec.pt"))
     input_batch = torch.load("image_codec_test_input.pt")
     reference_output = torch.load("image_codec_test_output.pt")
 
