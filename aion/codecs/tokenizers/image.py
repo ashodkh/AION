@@ -114,7 +114,7 @@ class MagViTAEImageCodec(AutoencoderImageCodec):
             mult_factor: Multiplication factor.
         """
         # Get MagViT architecture
-        self.model = MagVitAE(
+        model = MagVitAE(
             n_bands=multisurvey_projection_dims,
             hidden_dims=hidden_dims,
             n_compressions=n_compressions,
@@ -123,11 +123,12 @@ class MagViTAEImageCodec(AutoencoderImageCodec):
         super().__init__(
             n_bands,
             quantizer,
-            self.model.encode,
-            self.model.decode,
+            model.encode,
+            model.decode,
             hidden_dims,
             embedding_dim,
             multisurvey_projection_dims,
             range_compression_factor,
             mult_factor,
         )
+        self.model = model

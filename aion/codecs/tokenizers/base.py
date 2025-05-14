@@ -6,7 +6,7 @@ from jaxtyping import Float, Bool
 from aion.codecs.quantizers import Quantizer
 
 
-class Codec(ABC):
+class Codec(ABC, torch.nn.Module):
     """Abstract definition of a Codec.
 
     A codec embeds a specific type of data into a sequence of either
@@ -52,6 +52,13 @@ class Codec(ABC):
     ) -> Float[torch.Tensor, " b c *input_shape"]:
         """Encodes a given batch of samples into latent space."""
         return self._decode(z)
+
+    def forward(
+        self,
+        x: Float[torch.Tensor, " b c *input_shape"],
+        channel_mask: Bool[torch.Tensor, " b c"],
+    ) -> Float[torch.Tensor, " b c1 *code_shape"]:
+        return self.encode(x, channel_mask)
 
 
 class QuantizedCodec(Codec):
