@@ -2,7 +2,6 @@ import pytest
 import torch
 
 from aion.codecs.tokenizers.image import MagViTAEImageCodec
-from aion.codecs.quantizers import FiniteScalarQuantizer
 
 
 @pytest.mark.parametrize("n_bands", [3, 10])
@@ -14,7 +13,7 @@ def test_magvit_image_tokenizer(
 ):
     tokenizer = MagViTAEImageCodec(
         n_bands=n_bands,
-        quantizer=FiniteScalarQuantizer(levels=[1] * embedding_dim),
+        quantizer_levels=[1] * embedding_dim,
         hidden_dims=hidden_dims,
         multisurvey_projection_dims=multisurvey_projection_dims,
         n_compressions=2,
@@ -32,26 +31,14 @@ def test_magvit_image_tokenizer(
     assert decoded.shape == random_input.shape
 
 
-def test_previous_predictions():
-    quantizer = FiniteScalarQuantizer(levels=[7, 5, 5, 5, 5])
-    codec = MagViTAEImageCodec(
-        embedding_dim=5,
-        hidden_dims=512,
-        mult_factor=10.0,
-        multisurvey_projection_dims=54,
-        n_bands=9,
-        n_compressions=2,
-        num_consecutive=4,
-        range_compression_factor=0.01,
-        quantizer=quantizer,
-    )
+def test_hf_previous_predictions(data_dir):
+    codec = MagViTAEImageCodec.from_pretrained("polymathic-ai/aion-image-codec")
 
-    codec.load_state_dict(torch.load("image_codec.pt"))
-    input_batch = torch.load("image_codec_test_input.pt")
-    reference_output = torch.load("image_codec_test_output.pt")
+    input_batch = torch.load(data_dir / "image_codec_test_input.pt")
+    reference_output = torch.load(data_dir / "image_codec_test_output.pt")
 
     with torch.no_grad():
         output = codec.encode(
             input_batch["image"]["array"], input_batch["image"]["channel_mask"]
         )
-        assert torch.allclose(output, reference_output)
+    assert torch.allclose(output, reference_output)

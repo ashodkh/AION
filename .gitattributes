@@ -1,0 +1,2 @@
+tests/test_data/image_codec_test_input.pt filter=lfs diff=lfs merge=lfs -text
+tests/test_data/image_codec_test_output.pt filter=lfs diff=lfs merge=lfs -text

@@ -1,9 +1,10 @@
 import torch
-from jaxtyping import Float, Bool
+from huggingface_hub import PyTorchModelHubMixin
+from jaxtyping import Bool, Float
 
 from aion.codecs.modules.magvit import MagVitAE
 from aion.codecs.modules.subsampler import SubsampledLinear
-from aion.codecs.quantizers import Quantizer
+from aion.codecs.quantizers import FiniteScalarQuantizer, Quantizer
 from aion.codecs.tokenizers.base import QuantizedCodec
 from aion.codecs.utils import range_compression, reverse_range_compression
 
@@ -87,11 +88,11 @@ class AutoencoderImageCodec(QuantizedCodec):
         return dec
 
 
-class MagViTAEImageCodec(AutoencoderImageCodec):
+class MagViTAEImageCodec(AutoencoderImageCodec, PyTorchModelHubMixin):
     def __init__(
         self,
         n_bands: int,
-        quantizer: Quantizer,
+        quantizer_levels: list[int],
         hidden_dims: int = 512,
         multisurvey_projection_dims: int = 54,
         n_compressions: int = 2,  # Number of compressions in the network
@@ -120,6 +121,7 @@ class MagViTAEImageCodec(AutoencoderImageCodec):
             n_compressions=n_compressions,
             num_consecutive=num_consecutive,
         )
+        quantizer = FiniteScalarQuantizer(levels=quantizer_levels)
         super().__init__(
             n_bands,
             quantizer,
