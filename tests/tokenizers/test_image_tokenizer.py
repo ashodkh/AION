@@ -34,8 +34,10 @@ def test_magvit_image_tokenizer(
 def test_hf_previous_predictions(data_dir):
     codec = MagViTAEImageCodec.from_pretrained("polymathic-ai/aion-image-codec")
 
-    input_batch = torch.load(data_dir / "image_codec_test_input.pt")
-    reference_output = torch.load(data_dir / "image_codec_test_output.pt")
+    input_batch = torch.load(data_dir / "image_codec_test_input.pt", weights_only=False)
+    reference_output = torch.load(
+        data_dir / "image_codec_test_output.pt", weights_only=False
+    )
 
     with torch.no_grad():
         output = codec.encode(
