@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 import torch
-from jaxtyping import Float, Bool
+from jaxtyping import Float
 
 from aion.codecs.quantizers import Quantizer
 
@@ -42,10 +42,9 @@ class Codec(ABC, torch.nn.Module):
     def encode(
         self,
         x: Float[torch.Tensor, " b c *input_shape"],
-        channel_mask: Bool[torch.Tensor, " b c"],
     ) -> Float[torch.Tensor, " b c1 *code_shape"]:
         """Encodes a given batch of samples into latent space."""
-        return self._encode(x, channel_mask)
+        return self._encode(x)
 
     def decode(
         self, z: Float[torch.Tensor, " b c1 *code_shape"]
@@ -56,9 +55,8 @@ class Codec(ABC, torch.nn.Module):
     def forward(
         self,
         x: Float[torch.Tensor, " b c *input_shape"],
-        channel_mask: Bool[torch.Tensor, " b c"],
     ) -> Float[torch.Tensor, " b c1 *code_shape"]:
-        return self.encode(x, channel_mask)
+        return self.encode(x)
 
 
 class QuantizedCodec(Codec):
@@ -69,13 +67,12 @@ class QuantizedCodec(Codec):
     def decode(
         self, z: Float[torch.Tensor, " b c1 *code_shape"]
     ) -> Float[torch.Tensor, " b c *input_shape"]:
-        z = self.quantizer.reconstruct(z)
+        z = self.quantizer.decode(z)
         return super().decode(z)
 
     def encode(
         self,
         x: Float[torch.Tensor, " b c *input_shape"],
-        channel_mask: Bool[torch.Tensor, " b c"],
     ) -> Float[torch.Tensor, " b c1 *code_shape"]:
-        embedding = super().encode(x, channel_mask)
+        embedding = super().encode(x)
         return self.quantizer.encode(embedding)
