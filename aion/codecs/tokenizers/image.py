@@ -87,6 +87,14 @@ class AutoencoderImageCodec(QuantizedCodec):
 
         return dec
 
+    def encode(
+        self,
+        x: Float[torch.Tensor, " b c *input_shape"],
+        channel_mask: Bool[torch.Tensor, " b c"],
+    ) -> Float[torch.Tensor, " b c1 *code_shape"]:
+        embedding = self._encode(x, channel_mask)
+        return self.quantizer.encode(embedding)
+
 
 class MagViTAEImageCodec(AutoencoderImageCodec, PyTorchModelHubMixin):
     def __init__(
