@@ -1,11 +1,10 @@
 import pytest
 import torch
 
-from aion.codecs.quantizers.scalar import (
-    ScalarLogReservoirQuantizer,
-    ScalarReservoirQuantizer,
+from aion.codecs.tokenizers.scalar import (
+    ScalarLogReservoirCodec,
+    ScalarReservoirCodec,
 )
-from aion.codecs.tokenizers.scalar import ScalarIdentityCodec
 
 
 @pytest.mark.parametrize(
@@ -23,14 +22,10 @@ from aion.codecs.tokenizers.scalar import ScalarIdentityCodec
     ],
 )
 def test_log_reservoir_tokenizer(data_dir, modality):
-    codec = ScalarIdentityCodec(
-        modality=modality,
-        quantizer=ScalarLogReservoirQuantizer(
-            codebook_size=1024, reservoir_size=100000
-        ),
+    codec = ScalarLogReservoirCodec.from_pretrained(
+        f"polymathic-ai/aion-scalar-{modality.lower().replace('_', '-')}-codec"
     )
     codec.eval()
-    codec.load_state_dict(torch.load(data_dir / f"{modality}_codec.pt"))
 
     input_batch = torch.load(data_dir / f"{modality}_input.pt")
     output_batch = torch.load(data_dir / f"{modality}_output.pt")
@@ -42,9 +37,8 @@ def test_log_reservoir_tokenizer(data_dir, modality):
 
 @pytest.mark.parametrize("modality", ["SHAPE_E1", "SHAPE_E2", "EBV"])
 def test_reservoir_tokenizer(data_dir, modality):
-    codec = ScalarIdentityCodec(
-        modality=modality,
-        quantizer=ScalarReservoirQuantizer(codebook_size=1024, reservoir_size=100000),
+    codec = ScalarReservoirCodec.from_pretrained(
+        f"polymathic-ai/aion-scalar-{modality.lower().replace('_', '-')}-codec"
     )
     codec.eval()
     codec.load_state_dict(torch.load(data_dir / f"{modality}_codec.pt"))

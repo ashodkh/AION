@@ -1,14 +1,19 @@
 from typing import Dict, Optional
 
 import torch
+from huggingface_hub import PyTorchModelHubMixin
 from jaxtyping import Float
 from torch import Tensor
 
 from aion.codecs.quantizers import Quantizer
+from aion.codecs.quantizers.scalar import (
+    ScalarLogReservoirQuantizer,
+    ScalarReservoirQuantizer,
+)
 from aion.codecs.tokenizers.base import QuantizedCodec
 
 
-class ScalarIdentityCodec(QuantizedCodec):
+class BaseScalarIdentityCodec(QuantizedCodec, PyTorchModelHubMixin):
     """Codec for scalar quantities.
 
     A codec that embeds scalar quantities through an identity mapping. A
@@ -34,3 +39,21 @@ class ScalarIdentityCodec(QuantizedCodec):
 
     def _decode(self, z: torch.FloatTensor) -> Dict[str, torch.FloatTensor]:
         return {self.modality: z}
+
+
+class ScalarReservoirCodec(BaseScalarIdentityCodec):
+    def __init__(self, modality: str, codebook_size: int, reservoir_size: int):
+        quantizer = ScalarReservoirQuantizer(
+            codebook_size=codebook_size,
+            reservoir_size=reservoir_size,
+        )
+        super().__init__(modality, quantizer)
+
+
+class ScalarLogReservoirCodec(BaseScalarIdentityCodec):
+    def __init__(self, modality: str, codebook_size: int, reservoir_size: int):
+        quantizer = ScalarLogReservoirQuantizer(
+            codebook_size=codebook_size,
+            reservoir_size=reservoir_size,
+        )
+        super().__init__(modality, quantizer)
