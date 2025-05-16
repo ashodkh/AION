@@ -1,11 +1,11 @@
 import pytest
 import torch
 
-from aion.codecs.tokenizers.scalar import (
-    ScalarIdentityCodec,
+from aion.codecs.quantizers.scalar import (
     ScalarLogReservoirQuantizer,
     ScalarReservoirQuantizer,
 )
+from aion.codecs.tokenizers.scalar import ScalarIdentityCodec
 
 
 @pytest.mark.parametrize(
