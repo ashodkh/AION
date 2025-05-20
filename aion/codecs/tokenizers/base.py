@@ -68,7 +68,7 @@ class QuantizedCodec(Codec):
         self, z: Float[torch.Tensor, " b c1 *code_shape"]
     ) -> Float[torch.Tensor, " b c *input_shape"]:
         z = self.quantizer.decode(z)
-        return super().decode(z)
+        return self._decode(z)
 
     def encode(
         self,
