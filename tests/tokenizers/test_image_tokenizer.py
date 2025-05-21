@@ -52,7 +52,7 @@ def test_hf_previous_predictions(data_dir):
 
     assert encoded_output.shape == reference_encoded_output.shape
     assert torch.allclose(encoded_output, reference_encoded_output), (
-        f"Encoded output is not close to reference output: {(torch.abs(encoded_output - reference_encoded_output) > 1e-5).sum()}, "
+        f"Encoded output is not close to reference output: {torch.abs(encoded_output - reference_encoded_output).sum()}, "
         f"{torch.where(torch.abs(encoded_output - reference_encoded_output) > 1e-5)}"
     )
     assert decoded_output.shape == reference_decoded_output.shape
