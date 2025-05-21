@@ -9,7 +9,7 @@ description = "AstronomIcal Omnimodal Network"
 requires-python = ">=3.10"
 dependencies = [
     "einops>=0.7.0",
-    "huggingface_hub==0.24.7",
+    "huggingface_hub[torch]>=0.24.7",
     "jaxtyping>=0.2.28",
     "numpy",
     "tokenizers>=0.15.2",
