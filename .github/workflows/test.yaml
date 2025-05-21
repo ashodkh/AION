@@ -28,4 +28,4 @@ jobs:
       - name: Install AION
         run: uv sync --all-extras --dev
       - name: Run tests
-        run: uv pytest tests
+        run: uv run pytest tests
