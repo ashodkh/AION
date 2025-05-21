@@ -51,12 +51,6 @@ def test_hf_previous_predictions(data_dir):
         decoded_output = codec.decode(encoded_output)
 
     assert encoded_output.shape == reference_encoded_output.shape
-    assert torch.allclose(encoded_output, reference_encoded_output), (
-        f"Encoded output is not close to reference output: {torch.abs(encoded_output - reference_encoded_output).sum()}, "
-        f"{torch.where(torch.abs(encoded_output - reference_encoded_output) > 1e-5)}"
-    )
+    assert torch.allclose(encoded_output, reference_encoded_output)
     assert decoded_output.shape == reference_decoded_output.shape
-    assert torch.allclose(decoded_output, reference_decoded_output), (
-        f"Decoded output is not close to reference output: {(torch.abs(decoded_output - reference_decoded_output) > 1e-5).sum()}, "
-        f"{torch.where(torch.abs(decoded_output - reference_decoded_output) > 1e-5)}"
-    )
+    assert torch.allclose(decoded_output, reference_decoded_output)
