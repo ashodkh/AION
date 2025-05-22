@@ -77,6 +77,19 @@ class Clamp(object):
         return image
     
 
+class RangeCompression(object):
+    """Formatter that applies arcsinh compression on each band of the input."""
+
+    def __init__(self, div_factor: float | int = 0.01, mult_factor: float | int = 10.0):
+        self.div_factor = div_factor
+
+    def forward(self, sample):
+        return torch.arcsinh(sample / self.div_factor) * self.div_factor * self.mult_factor
+    
+    def backward(self, sample):
+        return (torch.sinh(sample / self.div_factor) * self.div_factor) / self.mult_factor
+
+
 class RescaleToLegacySurvey(object):
     """Formatter that rescales the images to have a fixed number of bands."""
 

@@ -6,8 +6,7 @@ from aion.codecs.modules.magvit import MagVitAE
 from aion.codecs.modules.subsampler import SubsampledLinear
 from aion.codecs.quantizers import FiniteScalarQuantizer, Quantizer
 from aion.codecs.tokenizers.base import QuantizedCodec
-from aion.codecs.utils import range_compression, reverse_range_compression
-from aion.codecs.preprocessing.image import ImagePadder, CenterCrop, RescaleToLegacySurvey, Clamp
+from aion.codecs.preprocessing.image import ImagePadder, CenterCrop, RescaleToLegacySurvey, Clamp, RangeCompression
 
 
 class AutoencoderImageCodec(QuantizedCodec):
@@ -36,6 +35,9 @@ class AutoencoderImageCodec(QuantizedCodec):
         self.clamp = Clamp()
         self.center_crop = CenterCrop(crop_size=96)
         self.rescaler = RescaleToLegacySurvey()
+        self.range_compressor = RangeCompression(
+            div_factor=range_compression_factor, mult_factor=mult_factor
+        )
 
         # Handle multi-survey projection
         self.image_padder = ImagePadder()
@@ -58,17 +60,7 @@ class AutoencoderImageCodec(QuantizedCodec):
     @property
     def modality(self) -> str:
         return "image"
-    
-    def _range_compress(self, x):
-        x = range_compression(x, self.range_compression_factor)
-        x = x * self.mult_factor
-        return x
-
-    def _reverse_range_compress(self, x):
-        x = x / self.mult_factor
-        x = reverse_range_compression(x, self.range_compression_factor)
-        return x
-    
+        
     def _get_survey(self, bands: list[str]) -> str:
         survey = bands[0].split("-")[0]
         return survey
@@ -83,7 +75,7 @@ class AutoencoderImageCodec(QuantizedCodec):
         x = self.center_crop(x)
         x = self.clamp(x)
         x = self.rescaler.forward(x, self._get_survey(bands))
-        x = self._range_compress(x)
+        x = self.range_compressor.forward(x)
 
         # Handle multi-survey projection
         x, channel_mask = self.image_padder.forward(x, bands)
@@ -108,7 +100,7 @@ class AutoencoderImageCodec(QuantizedCodec):
         dec = self.subsample_out(dec, channel_mask)
 
         # Postprocess the image
-        dec = self._reverse_range_compress(dec)
+        dec = self.range_compressor.backward(dec)
         dec = self.image_padder.backward(dec, bands)
         dec = self.rescaler.backward(dec, self._get_survey(bands))
         return dec
