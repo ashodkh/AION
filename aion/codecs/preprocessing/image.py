@@ -1,5 +1,5 @@
 import torch
-from band_to_index import band_to_index, band_center_max
+from aion.codecs.preprocessing.band_to_index import band_to_index, band_center_max
 
 
 class ImagePadder(object):
@@ -70,25 +70,11 @@ class Clamp(object):
     def __init__(self):
         self.clamp_dict = band_center_max
 
-    def __call__(self, image):
-        for i in range(image.shape[1]):
-            band = image[:,i,:,:]
-            image[:,i,:,:] = torch.clip(image[i], -self.clamp_dict[band], self.clamp_dict[band])
+    def __call__(self, image, bands):
+        for i, band in enumerate(bands):
+            image[:,i,:,:] = torch.clip(image[:,i,:,:], -self.clamp_dict[band], self.clamp_dict[band])
         return image
     
-
-class RangeCompression(object):
-    """Formatter that applies arcsinh compression on each band of the input."""
-
-    def __init__(self, div_factor: float | int = 0.01, mult_factor: float | int = 10.0):
-        self.div_factor = div_factor
-
-    def forward(self, sample):
-        return torch.arcsinh(sample / self.div_factor) * self.div_factor * self.mult_factor
-    
-    def backward(self, sample):
-        return (torch.sinh(sample / self.div_factor) * self.div_factor) / self.mult_factor
-
 
 class RescaleToLegacySurvey(object):
     """Formatter that rescales the images to have a fixed number of bands."""
