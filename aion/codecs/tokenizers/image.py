@@ -1,6 +1,7 @@
 import torch
 from huggingface_hub import PyTorchModelHubMixin
-from jaxtyping import Float, Dict
+from jaxtyping import Float
+from typing import Dict
 from torch import Tensor
 
 from aion.codecs.modules.magvit import MagVitAE
