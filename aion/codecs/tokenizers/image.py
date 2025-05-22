@@ -1,12 +1,18 @@
 import torch
 from huggingface_hub import PyTorchModelHubMixin
-from jaxtyping import Bool, Float
+from jaxtyping import Float, Dict
+from torch import Tensor
 
 from aion.codecs.modules.magvit import MagVitAE
 from aion.codecs.modules.subsampler import SubsampledLinear
 from aion.codecs.quantizers import FiniteScalarQuantizer, Quantizer
 from aion.codecs.tokenizers.base import Codec
-from aion.codecs.preprocessing.image import ImagePadder, CenterCrop, RescaleToLegacySurvey, Clamp
+from aion.codecs.preprocessing.image import (
+    ImagePadder,
+    CenterCrop,
+    RescaleToLegacySurvey,
+    Clamp,
+)
 from aion.codecs.preprocessing.band_to_index import band_to_index
 from aion.codecs.utils import range_compression, reverse_range_compression
 
@@ -58,16 +64,16 @@ class AutoencoderImageCodec(Codec):
 
     @property
     def quantizer(self):
-        return self._quantizer 
+        return self._quantizer
 
     @property
     def modality(self) -> str:
         return "image"
-        
+
     def _get_survey(self, bands: list[str]) -> str:
         survey = bands[0].split("-")[0]
         return survey
-    
+
     def _range_compress(self, x):
         x = range_compression(x, self.range_compression_factor)
         x = x * self.mult_factor
@@ -78,14 +84,10 @@ class AutoencoderImageCodec(Codec):
         x = reverse_range_compression(x, self.range_compression_factor)
         return x
 
-    def _encode(
-        self,
-        x
-    ) -> Float[torch.Tensor, " b c1 w1 h1"]:
-
+    def _encode(self, x) -> Float[torch.Tensor, " b c1 w1 h1"]:
         # Extract the flux array and band information
-        bands = x['image']['bands']
-        x = x['image']['flux']
+        bands = x["image"]["bands"]
+        x = x["image"]["flux"]
 
         # Preprocess the image
         x = self.center_crop(x)
@@ -103,8 +105,7 @@ class AutoencoderImageCodec(Codec):
         return h
 
     def _decode(
-        self,
-        z: Float[torch.Tensor, " b c1 w1 h1"]
+        self, z: Float[torch.Tensor, " b c1 w1 h1"]
     ) -> Float[torch.Tensor, " b {self.n_bands} w h"]:
         # Decode the image
         h = self.post_quant_proj(z)
@@ -116,8 +117,7 @@ class AutoencoderImageCodec(Codec):
         return dec
 
     def decode(
-        self, z: Float[Tensor, "b c1 *code_shape"],
-        bands=None
+        self, z: Float[Tensor, "b c1 *code_shape"], bands=None
     ) -> Dict[str, Dict[str, Float[Tensor, "b c *input_shape"]]]:
         dec = super().decode(z)
 
@@ -128,6 +128,7 @@ class AutoencoderImageCodec(Codec):
         dec = self.image_padder.backward(dec, bands)
         dec = self.rescaler.backward(dec, self._get_survey(bands))
         return dec
+
 
 class ImageCodec(AutoencoderImageCodec, PyTorchModelHubMixin):
     def __init__(

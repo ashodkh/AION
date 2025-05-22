@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 
 import torch
-from jaxtyping import Float, Bool
+from jaxtyping import Float, Dict
+from torch import Tensor
 
 from aion.codecs.quantizers import Quantizer
 

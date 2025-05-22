@@ -3,6 +3,7 @@ import torch
 
 from aion.codecs.tokenizers import ImageCodec
 
+
 @pytest.mark.parametrize("embedding_dim", [5, 10])
 @pytest.mark.parametrize("multisurvey_projection_dims", [12, 24])
 @pytest.mark.parametrize("hidden_dims", [8, 16])
@@ -22,13 +23,16 @@ def test_magvit_image_tokenizer(
     )
     batch_size = 4
     n_bands = 4
-    batch = {'image': {
-        'flux': torch.randn(batch_size, n_bands, 96, 96),
-        'bands': ['DES_G','DES_R','DES_I','DES_Z']
-    }}
+    batch = {
+        "image": {
+            "flux": torch.randn(batch_size, n_bands, 96, 96),
+            "bands": ["DES_G", "DES_R", "DES_I", "DES_Z"],
+        }
+    }
     encoded = tokenizer.encode(batch)
     assert encoded.shape == (batch_size, 24, 24)
-    decoded = tokenizer.decode(encoded, bands=['DES_G','DES_R','DES_I','DES_Z'])
+    decoded = tokenizer.decode(encoded, bands=["DES_G", "DES_R", "DES_I", "DES_Z"])
+    random_input = batch["image"]["flux"]
     assert decoded.shape == random_input.shape
 
 
@@ -47,7 +51,9 @@ def test_hf_previous_predictions(data_dir):
 
     with torch.no_grad():
         encoded_output = codec.encode(input_batch)
-        decoded_output = codec.decode(encoded_output, bands=['DES_G','DES_R','DES_I','DES_Z'])
+        decoded_output = codec.decode(
+            encoded_output, bands=["DES_G", "DES_R", "DES_I", "DES_Z"]
+        )
 
     assert encoded_output.shape == reference_encoded_output.shape
     assert torch.allclose(encoded_output, reference_encoded_output)
