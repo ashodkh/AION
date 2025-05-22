@@ -8,8 +8,9 @@ from aion.codecs.tokenizers import ImageCodec
 @pytest.mark.parametrize("multisurvey_projection_dims", [12, 24])
 @pytest.mark.parametrize("hidden_dims", [8, 16])
 def test_magvit_image_tokenizer(
-    n_bands, embedding_dim, multisurvey_projection_dims, hidden_dims
+    embedding_dim, multisurvey_projection_dims, hidden_dims
 ):
+    n_bands = 4
     tokenizer = ImageCodec(
         n_bands=n_bands,
         quantizer_levels=[1] * embedding_dim,
@@ -22,7 +23,6 @@ def test_magvit_image_tokenizer(
         mult_factor=10,
     )
     batch_size = 4
-    n_bands = 4
     batch = {
         "image": {
             "flux": torch.randn(batch_size, n_bands, 96, 96),
