@@ -7,6 +7,7 @@ from aion.codecs.modules.subsampler import SubsampledLinear
 from aion.codecs.quantizers import FiniteScalarQuantizer, Quantizer
 from aion.codecs.tokenizers.base import QuantizedCodec
 from aion.codecs.utils import range_compression, reverse_range_compression
+from aion.preprocessing.image import ImagePadder
 
 
 class AutoencoderImageCodec(QuantizedCodec):
@@ -31,6 +32,8 @@ class AutoencoderImageCodec(QuantizedCodec):
         self.encoder = encoder
         self.decoder = decoder
 
+        # Handles multi-survey projections
+        self.image_padder = ImagePadder()
         self.subsample_in = SubsampledLinear(
             dim_in=n_bands, dim_out=multisurvey_projection_dims, subsample_in=True
         )
@@ -51,12 +54,12 @@ class AutoencoderImageCodec(QuantizedCodec):
     def modality(self) -> str:
         return "image"
 
-    def _preprocess_sample(self, x):
+    def _range_compress(self, x):
         x = range_compression(x, self.range_compression_factor)
         x = x * self.mult_factor
         return x
 
-    def _postprocess_sample(self, x):
+    def _reverse_range_compress(self, x):
         x = x / self.mult_factor
         x = reverse_range_compression(x, self.range_compression_factor)
         return x
@@ -65,8 +68,9 @@ class AutoencoderImageCodec(QuantizedCodec):
         self,
         x: Float[torch.Tensor, " b {self.n_bands} w h"],
         channel_mask: Bool[torch.Tensor, " b {self.n_bands}"],
+        preprocess: bool = True,
     ) -> Float[torch.Tensor, " b c1 w1 h1"]:
-        x = self._preprocess_sample(x)
+        x = self._range_compress(x)
         x = self.subsample_in(x, channel_mask)
         h = self.encoder(x)
         h = self.pre_quant_proj(h)
@@ -75,15 +79,14 @@ class AutoencoderImageCodec(QuantizedCodec):
     def _decode(
         self,
         z: Float[torch.Tensor, " b c1 w1 h1"],
+        postprocess: bool = True,
     ) -> Float[torch.Tensor, " b {self.n_bands} w h"]:
-        # Decode the image
         h = self.post_quant_proj(z)
         dec = self.decoder(h)
         batch_size = z.shape[0]
         channel_mask = torch.ones((batch_size, self.n_bands), device=z.device)
         dec = self.subsample_out(dec, channel_mask)
-        # Undo range compression if necessary
-        dec = self._postprocess_sample(dec)
+        dec = self._reverse_range_compress(dec)
 
         return dec
 
