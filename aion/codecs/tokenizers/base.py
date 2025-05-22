@@ -21,7 +21,9 @@ class Codec(ABC, torch.nn.Module):
 
     @abstractmethod
     def _encode(
-        self, x: Float[torch.Tensor, " b c *input_shape"]
+        self, 
+        x: Float[torch.Tensor, " b c *input_shape"],
+        bands: list[str],
     ) -> Float[torch.Tensor, " b c1 *code_shape"]:
         """Function to be implemented by subclasses which
         takes a batch of input samples and embedds it into a
@@ -31,7 +33,9 @@ class Codec(ABC, torch.nn.Module):
 
     @abstractmethod
     def _decode(
-        self, z: Float[torch.Tensor, " b c1 *code_shape"]
+        self, 
+        z: Float[torch.Tensor, " b c1 *code_shape"],
+        bands: list[str],
     ) -> Float[torch.Tensor, " b c *input_shape"]:
         """Function to be implemented by subclasses which
         takes a batch of latent space embeddings (after dequantization)
@@ -42,23 +46,25 @@ class Codec(ABC, torch.nn.Module):
     def encode(
         self,
         x: Float[torch.Tensor, " b c *input_shape"],
-        channel_mask: Bool[torch.Tensor, " b c"],
+        bands: list[str],
     ) -> Float[torch.Tensor, " b c1 *code_shape"]:
         """Encodes a given batch of samples into latent space."""
-        return self._encode(x, channel_mask)
+        return self._encode(x, bands)
 
     def decode(
-        self, z: Float[torch.Tensor, " b c1 *code_shape"]
+        self, 
+        z: Float[torch.Tensor, " b c1 *code_shape"],
+        bands: list[str],
     ) -> Float[torch.Tensor, " b c *input_shape"]:
         """Encodes a given batch of samples into latent space."""
-        return self._decode(z)
+        return self._decode(z, bands)
 
     def forward(
         self,
         x: Float[torch.Tensor, " b c *input_shape"],
-        channel_mask: Bool[torch.Tensor, " b c"],
+        bands: list[str],
     ) -> Float[torch.Tensor, " b c1 *code_shape"]:
-        return self.encode(x, channel_mask)
+        return self.encode(x, bands)
 
 
 class QuantizedCodec(Codec):
@@ -67,15 +73,17 @@ class QuantizedCodec(Codec):
         self.quantizer = quantizer
 
     def decode(
-        self, z: Float[torch.Tensor, " b c1 *code_shape"]
+        self, 
+        z: Float[torch.Tensor, " b c1 *code_shape"],
+        bands: list[str],
     ) -> Float[torch.Tensor, " b c *input_shape"]:
         z = self.quantizer.decode(z)
-        return self._decode(z)
+        return self._decode(z, bands)
 
     def encode(
         self,
         x: Float[torch.Tensor, " b c *input_shape"],
-        channel_mask: Bool[torch.Tensor, " b c"],
+        bands: list[str],
     ) -> Float[torch.Tensor, " b c1 *code_shape"]:
-        embedding = super().encode(x, channel_mask)
+        embedding = super().encode(x, bands)
         return self.quantizer.encode(embedding)
