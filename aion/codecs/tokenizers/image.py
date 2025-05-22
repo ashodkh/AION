@@ -96,7 +96,7 @@ class AutoencoderImageCodec(QuantizedCodec):
         return self.quantizer.encode(embedding)
 
 
-class MagViTAEImageCodec(AutoencoderImageCodec, PyTorchModelHubMixin):
+class ImageCodec(AutoencoderImageCodec, PyTorchModelHubMixin):
     def __init__(
         self,
         n_bands: int,
