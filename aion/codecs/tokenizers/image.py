@@ -1,9 +1,10 @@
 import torch
-from jaxtyping import Float
+from huggingface_hub import PyTorchModelHubMixin
+from jaxtyping import Bool, Float
 
 from aion.codecs.modules.magvit import MagVitAE
 from aion.codecs.modules.subsampler import SubsampledLinear
-from aion.codecs.quantizers import Quantizer
+from aion.codecs.quantizers import FiniteScalarQuantizer, Quantizer
 from aion.codecs.tokenizers.base import QuantizedCodec
 from aion.codecs.utils import range_compression, reverse_range_compression
 
@@ -61,11 +62,11 @@ class AutoencoderImageCodec(QuantizedCodec):
         return x
 
     def _encode(
-        self, x: Float[torch.Tensor, " b {self.n_bands} w h"]
+        self,
+        x: Float[torch.Tensor, " b {self.n_bands} w h"],
+        channel_mask: Bool[torch.Tensor, " b {self.n_bands}"],
     ) -> Float[torch.Tensor, " b c1 w1 h1"]:
         x = self._preprocess_sample(x)
-        batch_size = x.shape[0]
-        channel_mask = torch.zeros((batch_size, self.n_bands), device=x.device)
         x = self.subsample_in(x, channel_mask)
         h = self.encoder(x)
         h = self.pre_quant_proj(h)
@@ -87,11 +88,11 @@ class AutoencoderImageCodec(QuantizedCodec):
         return dec
 
 
-class MagViTAEImageCodec(AutoencoderImageCodec):
+class ImageCodec(AutoencoderImageCodec, PyTorchModelHubMixin):
     def __init__(
         self,
         n_bands: int,
-        quantizer: Quantizer,
+        quantizer_levels: list[int],
         hidden_dims: int = 512,
         multisurvey_projection_dims: int = 54,
         n_compressions: int = 2,  # Number of compressions in the network
@@ -114,20 +115,22 @@ class MagViTAEImageCodec(AutoencoderImageCodec):
             mult_factor: Multiplication factor.
         """
         # Get MagViT architecture
-        self.model = MagVitAE(
+        model = MagVitAE(
             n_bands=multisurvey_projection_dims,
             hidden_dims=hidden_dims,
             n_compressions=n_compressions,
             num_consecutive=num_consecutive,
         )
+        quantizer = FiniteScalarQuantizer(levels=quantizer_levels)
         super().__init__(
             n_bands,
             quantizer,
-            self.model.encode,
-            self.model.decode,
+            model.encode,
+            model.decode,
             hidden_dims,
             embedding_dim,
             multisurvey_projection_dims,
             range_compression_factor,
             mult_factor,
         )
+        self.model = model

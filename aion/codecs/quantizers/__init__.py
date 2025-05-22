@@ -16,7 +16,7 @@ class Quantizer(torch.nn.Module, ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def reconstruct(
+    def decode(
         self, z: Float[torch.Tensor, " b c *code_shape"]
     ) -> Float[torch.Tensor, " b c *input_shape"]:
         """Reconstruct the input tensor from the quantized tensor."""
@@ -41,7 +41,7 @@ class Quantizer(torch.nn.Module, ABC):
         raise NotImplementedError
 
 
-class FiniteScaleQuantizer(Quantizer):
+class FiniteScalarQuantizer(Quantizer):
     def __init__(
         self,
         levels: list[int],
@@ -145,7 +145,7 @@ class FiniteScaleQuantizer(Quantizer):
         zhat = self._scale_and_shift(zhat)
         return (zhat * self._basis.to(zhat)).sum(axis=-1).to(torch.int32)
 
-    def reconstruct(
+    def decode(
         self, codes: Integer[torch.Tensor, " b *code"]
     ) -> Float[torch.Tensor, "b *c t"]:
         """
