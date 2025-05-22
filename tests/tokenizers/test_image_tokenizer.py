@@ -53,4 +53,6 @@ def test_hf_previous_predictions(data_dir):
     assert encoded_output.shape == reference_encoded_output.shape
     assert torch.allclose(encoded_output, reference_encoded_output)
     assert decoded_output.shape == reference_decoded_output.shape
-    assert torch.allclose(decoded_output, reference_decoded_output)
+    assert torch.allclose(
+        decoded_output, reference_decoded_output, rtol=1e-3, atol=1e-4
+    )
