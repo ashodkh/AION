@@ -1,6 +1,6 @@
 import torch
 from huggingface_hub import PyTorchModelHubMixin
-from jaxtyping import Bool, Float
+from jaxtyping import Bool, Float, Tensor, Dict
 
 from aion.codecs.modules.magvit import MagVitAE
 from aion.codecs.modules.subsampler import SubsampledLinear
@@ -66,12 +66,14 @@ class AutoencoderImageCodec(QuantizedCodec):
 
     def _encode(
         self,
-        x: Float[torch.Tensor, " b {self.n_bands} w h"],
-        channel_mask: Bool[torch.Tensor, " b {self.n_bands}"],
-        preprocess: bool = True,
+        batch: Dict[str, Dict[str, Float[Tensor, "b c w h"]]],
     ) -> Float[torch.Tensor, " b c1 w1 h1"]:
-        x = self._range_compress(x)
-        x = self.subsample_in(x, channel_mask)
+        # handle multisurvey padding
+        batch = self.image_padder(batch)
+        image = batch["image"]["flux"]
+        channel_mask = batch["image"]["channel_mask"]
+        x = self._range_compress(image)
+        x = self.subsample_in(image, channel_mask)
         h = self.encoder(x)
         h = self.pre_quant_proj(h)
         return h
@@ -79,15 +81,14 @@ class AutoencoderImageCodec(QuantizedCodec):
     def _decode(
         self,
         z: Float[torch.Tensor, " b c1 w1 h1"],
-        postprocess: bool = True,
-    ) -> Float[torch.Tensor, " b {self.n_bands} w h"]:
+    ) -> Dict[str, Dict[str, Float[Tensor, "b c w h"]]]:
         h = self.post_quant_proj(z)
         dec = self.decoder(h)
         batch_size = z.shape[0]
         channel_mask = torch.ones((batch_size, self.n_bands), device=z.device)
         dec = self.subsample_out(dec, channel_mask)
         dec = self._reverse_range_compress(dec)
-
+        
         return dec
 
 
