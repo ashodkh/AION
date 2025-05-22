@@ -1,18 +1,5 @@
 import torch
-
-
-# Keeps track of the band indices for HSC and DES bands
-band_to_index = {
-    "HSC-G": 0,
-    "HSC-R": 1,
-    "HSC-I": 2,
-    "HSC-Z": 3,
-    "HSC-Y": 4,
-    "DES-G": 5,
-    "DES-R": 6,
-    "DES-I": 7,
-    "DES-Z": 8,
-}
+from band_to_index import band_to_index, band_center_max
 
 
 class ImagePadder(object):
@@ -75,6 +62,19 @@ class CenterCrop(object):
         start_x = (width - self.crop_size) // 2
         start_y = (height - self.crop_size) // 2
         return image[:, :, start_y : start_y + self.crop_size, start_x : start_x + self.crop_size]
+    
+
+class Clamp(object):
+    """Formatter that clamps the images to a given range."""
+
+    def __init__(self):
+        self.clamp_dict = band_center_max
+
+    def __call__(self, image):
+        for i in range(image.shape[1]):
+            band = image[:,i,:,:]
+            image[:,i,:,:] = torch.clip(image[i], -self.clamp_dict[band], self.clamp_dict[band])
+        return image
     
 
 class RescaleToLegacySurvey(object):

@@ -7,7 +7,7 @@ from aion.codecs.modules.subsampler import SubsampledLinear
 from aion.codecs.quantizers import FiniteScalarQuantizer, Quantizer
 from aion.codecs.tokenizers.base import QuantizedCodec
 from aion.codecs.utils import range_compression, reverse_range_compression
-from aion.codecs.preprocessing.image import ImagePadder, CenterCrop, RescaleToLegacySurvey
+from aion.codecs.preprocessing.image import ImagePadder, CenterCrop, RescaleToLegacySurvey, Clamp
 
 
 class AutoencoderImageCodec(QuantizedCodec):
@@ -31,7 +31,10 @@ class AutoencoderImageCodec(QuantizedCodec):
         self.n_bands = n_bands
         self.encoder = encoder
         self.decoder = decoder
-        self._center_crop = CenterCrop(crop_size=96)
+
+        # Preprocessing
+        self.clamp = Clamp()
+        self.center_crop = CenterCrop(crop_size=96)
         self.rescaler = RescaleToLegacySurvey()
 
         # Handle multi-survey projection
@@ -75,11 +78,18 @@ class AutoencoderImageCodec(QuantizedCodec):
         x: Float[torch.Tensor, " b {self.n_bands} w h"],
         bands: list[str],
     ) -> Float[torch.Tensor, " b c1 w1 h1"]:
-        x = self._center_crop(x)
+        
+        # Preprocess the image
+        x = self.center_crop(x)
+        x = self.clamp(x)
         x = self.rescaler.forward(x, self._get_survey(bands))
-        x, channel_mask = self.image_padder.forward(x, bands)
         x = self._range_compress(x)
+
+        # Handle multi-survey projection
+        x, channel_mask = self.image_padder.forward(x, bands)
         x = self.subsample_in(x, channel_mask)
+
+        # Encode the image
         h = self.encoder(x)
         h = self.pre_quant_proj(h)
         return h
@@ -92,12 +102,15 @@ class AutoencoderImageCodec(QuantizedCodec):
         # Decode the image
         h = self.post_quant_proj(z)
         dec = self.decoder(h)
-        batch_size = z.shape[0]
-        channel_mask = torch.ones((batch_size, self.n_bands), device=z.device)
+        
+        # Handle multi-survey projection
+        channel_mask = torch.ones((z.shape[0], self.n_bands), device=z.device)
         dec = self.subsample_out(dec, channel_mask)
+
+        # Postprocess the image
         dec = self._reverse_range_compress(dec)
         dec = self.image_padder.backward(dec, bands)
-        dec = self.rescaler.reverse(dec, self._get_survey(bands))
+        dec = self.rescaler.backward(dec, self._get_survey(bands))
         return dec
 
 
