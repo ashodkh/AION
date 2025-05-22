@@ -62,3 +62,39 @@ class ImagePadder(object):
         # Select those channels along dim=1
         selected_image = padded_image[:, channel_indices, :, :]
         return selected_image
+    
+
+class CenterCrop(object):
+    """Formatter that crops the images to have a fixed number of bands."""
+
+    def __init__(self, crop_size: int = 96):
+        self.crop_size = crop_size
+
+    def __call__(self, image):
+        _, _, height, width = image.shape
+        start_x = (width - self.crop_size) // 2
+        start_y = (height - self.crop_size) // 2
+        return image[:, :, start_y : start_y + self.crop_size, start_x : start_x + self.crop_size]
+    
+
+class RescaleToLegacySurvey(object):
+    """Formatter that rescales the images to have a fixed number of bands."""
+
+    def __init__(self):
+        pass
+
+    def convert_zeropoint(self, zp: float) -> float:
+        return 10.0 ** ((zp - 22.5) / 2.5)
+    
+    def reverse_zeropoint(self, scale: float) -> float:
+        return 22.5 - 2.5 * torch.log10(scale)
+
+    def forward(self, image, survey):
+        zpscale = self.convert_zeropoint(27.0) if survey == "HSC" else 1.0
+        image /= zpscale
+        return image
+    
+    def backward(self, image, survey):
+        zpscale = self._reverse_zeropoint(27.0) if survey == "HSC" else 1.0
+        image *= zpscale
+        return image

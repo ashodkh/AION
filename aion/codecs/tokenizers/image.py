@@ -1,13 +1,13 @@
 import torch
 from huggingface_hub import PyTorchModelHubMixin
-from jaxtyping import Float
+from jaxtyping import Bool, Float
 
 from aion.codecs.modules.magvit import MagVitAE
 from aion.codecs.modules.subsampler import SubsampledLinear
 from aion.codecs.quantizers import FiniteScalarQuantizer, Quantizer
 from aion.codecs.tokenizers.base import QuantizedCodec
 from aion.codecs.utils import range_compression, reverse_range_compression
-from aion.codecs.preprocessing.image import ImagePadder
+from aion.codecs.preprocessing.image import ImagePadder, CenterCrop, RescaleToLegacySurvey
 
 
 class AutoencoderImageCodec(QuantizedCodec):
@@ -31,8 +31,10 @@ class AutoencoderImageCodec(QuantizedCodec):
         self.n_bands = n_bands
         self.encoder = encoder
         self.decoder = decoder
+        self._center_crop = CenterCrop(crop_size=96)
+        self.rescaler = RescaleToLegacySurvey()
 
-        # Handles multi-survey projections
+        # Handle multi-survey projection
         self.image_padder = ImagePadder()
         self.subsample_in = SubsampledLinear(
             dim_in=n_bands, dim_out=multisurvey_projection_dims, subsample_in=True
@@ -53,7 +55,7 @@ class AutoencoderImageCodec(QuantizedCodec):
     @property
     def modality(self) -> str:
         return "image"
-
+    
     def _range_compress(self, x):
         x = range_compression(x, self.range_compression_factor)
         x = x * self.mult_factor
@@ -63,16 +65,21 @@ class AutoencoderImageCodec(QuantizedCodec):
         x = x / self.mult_factor
         x = reverse_range_compression(x, self.range_compression_factor)
         return x
+    
+    def _get_survey(self, bands: list[str]) -> str:
+        survey = bands[0].split("-")[0]
+        return survey
 
     def _encode(
         self,
-        batch: Float[torch.Tensor, " b c *input_shape"],
+        x: Float[torch.Tensor, " b {self.n_bands} w h"],
         bands: list[str],
     ) -> Float[torch.Tensor, " b c1 w1 h1"]:
-        # handle multisurvey padding
-        image, channel_mask = self.image_padder.forward(batch, bands)
-        x = self._range_compress(image)
-        x = self.subsample_in(image, channel_mask)
+        x = self._center_crop(x)
+        x = self.rescaler.forward(x, self._get_survey(bands))
+        x, channel_mask = self.image_padder.forward(x, bands)
+        x = self._range_compress(x)
+        x = self.subsample_in(x, channel_mask)
         h = self.encoder(x)
         h = self.pre_quant_proj(h)
         return h
@@ -81,14 +88,16 @@ class AutoencoderImageCodec(QuantizedCodec):
         self,
         z: Float[torch.Tensor, " b c1 w1 h1"],
         bands: list[str],
-    ) -> Float[torch.Tensor, " b c *input_shape"]:
-        # handle multisurvey padding
+    ) -> Float[torch.Tensor, " b {self.n_bands} w h"]:
+        # Decode the image
         h = self.post_quant_proj(z)
         dec = self.decoder(h)
         batch_size = z.shape[0]
         channel_mask = torch.ones((batch_size, self.n_bands), device=z.device)
         dec = self.subsample_out(dec, channel_mask)
         dec = self._reverse_range_compress(dec)
+        dec = self.image_padder.backward(dec, bands)
+        dec = self.rescaler.reverse(dec, self._get_survey(bands))
         return dec
 
 

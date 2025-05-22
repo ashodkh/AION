@@ -22,7 +22,7 @@ class Codec(ABC, torch.nn.Module):
     @abstractmethod
     def _encode(
         self, 
-        x: Float[torch.Tensor, " b c *input_shape"],
+        x: Float[torch.Tensor, " b c *input_shape"], 
         bands: list[str],
     ) -> Float[torch.Tensor, " b c1 *code_shape"]:
         """Function to be implemented by subclasses which
