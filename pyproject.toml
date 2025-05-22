@@ -9,8 +9,9 @@ description = "AstronomIcal Omnimodal Network"
 requires-python = ">=3.10"
 dependencies = [
     "einops>=0.7.0",
-    "huggingface_hub==0.24.7",
+    "huggingface_hub[torch]>=0.24.7",
     "jaxtyping>=0.2.28",
+    "numpy",
     "tokenizers>=0.15.2",
     "torch>=2.4.0",
 ]
@@ -22,5 +23,7 @@ dev = [
     "ruff",
 ]
 
-[tool.setuptools]
-packages = ["aion", "aion.fourm"]
+[tool.ruff.lint]
+# Ignore space in shape notation for jaxtyping
+# See https://docs.kidger.site/jaxtyping/faq/#flake8-or-ruff-are-throwing-an-error
+ignore = ["F722"]
