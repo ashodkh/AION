@@ -33,6 +33,7 @@ class AutoencoderImageCodec(Codec):
         range_compression_factor: float = 0.01,
         mult_factor: float = 10.0,
     ):
+        super().__init__()
         self._quantizer = quantizer
         self.range_compression_factor = range_compression_factor
         self.mult_factor = mult_factor
