@@ -28,7 +28,7 @@ class BaseScalarIdentityCodec(Codec, PyTorchModelHubMixin):
 
     @property
     def quantizer(self) -> Quantizer:
-        return self._quantizer
+        return self.quantizer
 
     @property
     def modality(self) -> Type[ScalarModality]:
@@ -52,7 +52,7 @@ class ScalarCodec(BaseScalarIdentityCodec):
     ):
         super().__init__()
         self._modality_class = next(m for m in ScalarModalities if m.name == modality)
-        self._quantizer = ScalarReservoirQuantizer(
+        self.quantizer = ScalarReservoirQuantizer(
             codebook_size=codebook_size,
             reservoir_size=reservoir_size,
         )
@@ -67,7 +67,7 @@ class LogScalarCodec(BaseScalarIdentityCodec):
     ):
         super().__init__()
         self._modality_class = next(m for m in ScalarModalities if m.name == modality)
-        self._quantizer = ScalarLogReservoirQuantizer(
+        self.quantizer = ScalarLogReservoirQuantizer(
             codebook_size=codebook_size,
             reservoir_size=reservoir_size,
         )
