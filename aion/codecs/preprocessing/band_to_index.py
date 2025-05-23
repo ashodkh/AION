@@ -1,5 +1,5 @@
 # Keeps track of the band indices for HSC and DES bands
-band_to_index = {
+BAND_TO_INDEX = {
     "HSC-G": 0,
     "HSC-R": 1,
     "HSC-I": 2,
@@ -12,7 +12,7 @@ band_to_index = {
 }
 
 # Maximum band center values for HSC and DES bands
-band_center_max = {
+BAND_CENTER_MAX = {
     "HSC-G": 80,
     "HSC-R": 110,
     "HSC-I": 200,

@@ -15,7 +15,7 @@ from aion.codecs.preprocessing.image import (
     RescaleToLegacySurvey,
     Clamp,
 )
-from aion.codecs.preprocessing.band_to_index import band_to_index
+from aion.codecs.preprocessing.band_to_index import BAND_TO_INDEX
 from aion.codecs.utils import range_compression, reverse_range_compression
 
 
@@ -125,7 +125,7 @@ class AutoencoderImageCodec(Codec):
         decoded_flux_compressed = self._reverse_range_compress(decoded_flux_padded)
 
         if bands is None:
-            target_bands = list(band_to_index.keys())
+            target_bands = list(BAND_TO_INDEX.keys())
         else:
             target_bands = bands
 

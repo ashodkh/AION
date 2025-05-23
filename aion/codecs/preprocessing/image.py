@@ -1,18 +1,18 @@
 import torch
-from aion.codecs.preprocessing.band_to_index import band_to_index, band_center_max
+from aion.codecs.preprocessing.band_to_index import BAND_TO_INDEX, BAND_CENTER_MAX
 
 
 class ImagePadder:
     """Formatter that pads the images to have a fixed number of bands."""
 
     def __init__(self):
-        self.nbands = max(band_to_index.values()) + 1
+        self.nbands = max(BAND_TO_INDEX.values()) + 1
 
     def _check_bands(self, bands):
         for band in bands:
-            if band not in band_to_index:
+            if band not in BAND_TO_INDEX:
                 raise ValueError(
-                    f"Invalid band: {band}. Valid bands are: {list(band_to_index.keys())}"
+                    f"Invalid band: {band}. Valid bands are: {list(BAND_TO_INDEX.keys())}"
                 )
 
     def forward(self, image, bands):
@@ -29,7 +29,7 @@ class ImagePadder:
 
         # Create a list of new channel indices based on the order of bands
         new_channel_indices = [
-            band_to_index[band] for band in bands if band in band_to_index
+            BAND_TO_INDEX[band] for band in bands if band in BAND_TO_INDEX
         ]
 
         # Vectorized assignment of the original channels to the new positions
@@ -48,7 +48,7 @@ class ImagePadder:
         self._check_bands(bands)
 
         # Get the indices for the requested bands
-        channel_indices = [band_to_index[b] for b in bands]
+        channel_indices = [BAND_TO_INDEX[b] for b in bands]
 
         # Select those channels along dim=1
         selected_image = padded_image[:, channel_indices, :, :]
@@ -74,7 +74,7 @@ class Clamp(object):
     """Formatter that clamps the images to a given range."""
 
     def __init__(self):
-        self.clamp_dict = band_center_max
+        self.clamp_dict = BAND_CENTER_MAX
 
     def __call__(self, image, bands):
         for i, band in enumerate(bands):
