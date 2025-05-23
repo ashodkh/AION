@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from aion.codecs.tokenizers.scalar import (
+from aion.codecs import (
     LogScalarCodec,
     ScalarCodec,
 )

@@ -55,7 +55,7 @@ class ImagePadder:
         return selected_image
 
 
-class CenterCrop(object):
+class CenterCrop:
     """Formatter that crops the images to have a fixed number of bands."""
 
     def __init__(self, crop_size: int = 96):
@@ -70,7 +70,7 @@ class CenterCrop(object):
         ]
 
 
-class Clamp(object):
+class Clamp:
     """Formatter that clamps the images to a given range."""
 
     def __init__(self):
@@ -84,7 +84,7 @@ class Clamp(object):
         return image
 
 
-class RescaleToLegacySurvey(object):
+class RescaleToLegacySurvey:
     """Formatter that rescales the images to have a fixed number of bands."""
 
     def __init__(self):
