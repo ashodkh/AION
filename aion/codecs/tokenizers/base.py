@@ -18,10 +18,11 @@ class Codec(ABC, torch.nn.Module):
     original data space.
     """
 
-    def __init__(self, modality: Modality, quantizer: Quantizer):
-        super().__init__()
-        self._modality = modality
-        self._quantizer = quantizer
+    @property
+    @abstractmethod
+    def modality(self) -> Type[Modality]:
+        """Returns the modality key that this codec can operate on."""
+        raise NotImplementedError
 
     @abstractmethod
     def _encode(self, x: ModalityType) -> Float[Tensor, "b c1 *code_shape"]:
@@ -48,14 +49,10 @@ class Codec(ABC, torch.nn.Module):
         raise NotImplementedError
 
     @property
-    def quantizer(self) -> Quantizer:
+    @abstractmethod
+    def quantizer(self) -> "Quantizer":
         """Returns the quantizer."""
-        return self._quantizer
-
-    @property
-    def modality(self) -> Type[Modality]:
-        """Returns the modality key that this codec can operate on."""
-        return self._modality
+        raise NotImplementedError
 
     def encode(self, x: ModalityType) -> Float[Tensor, "b c1 *code_shape"]:
         """Encodes a given batch of samples into latent space.
