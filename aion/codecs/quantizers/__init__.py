@@ -278,7 +278,7 @@ class LucidrainsLFQ(Quantizer):
         )
         return indices
 
-    def reconstruct(self, codes: torch.Tensor) -> torch.Tensor:
+    def decode(self, codes: torch.Tensor) -> torch.Tensor:
         """Decodes the input code index into corresponding codebook entry of
         dimension (embedding_dim).
         """
@@ -334,7 +334,7 @@ class ScalarLinearQuantizer(Quantizer):
         """Quantizes the input tensor z, returns the corresponding
         codebook index.
         """
-        return self.reconstruct(self.encode(z))
+        return self.decode(self.encode(z))
 
     def encode(self, z: torch.Tensor) -> torch.Tensor:
         """Encodes the input tensor z, returns the corresponding
@@ -344,7 +344,7 @@ class ScalarLinearQuantizer(Quantizer):
             torch.bucketize(z, self.buckets, out_int32=True), 0, self.codebook_size - 1
         )
 
-    def reconstruct(self, codes: torch.Tensor) -> torch.Tensor:
+    def decode(self, codes: torch.Tensor) -> torch.Tensor:
         """Decodes the input code index into corresponding codebook entry of
         dimension (embedding_dim).
         """
