@@ -23,7 +23,6 @@ class AutoencoderImageCodec(Codec):
 
     def __init__(
         self,
-        n_bands: int,
         quantizer: Quantizer,
         encoder: torch.nn.Module,
         decoder: torch.nn.Module,
@@ -37,7 +36,6 @@ class AutoencoderImageCodec(Codec):
         self._quantizer = quantizer
         self.range_compression_factor = range_compression_factor
         self.mult_factor = mult_factor
-        self.n_bands = n_bands
         self.encoder = encoder
         self.decoder = decoder
 
@@ -49,10 +47,14 @@ class AutoencoderImageCodec(Codec):
         # Handle multi-survey projection
         self.image_padder = ImagePadder()
         self.subsample_in = SubsampledLinear(
-            dim_in=n_bands, dim_out=multisurvey_projection_dims, subsample_in=True
+            dim_in=self.image_padder.nbands,
+            dim_out=multisurvey_projection_dims,
+            subsample_in=True,
         )
         self.subsample_out = SubsampledLinear(
-            dim_in=multisurvey_projection_dims, dim_out=n_bands, subsample_in=False
+            dim_in=multisurvey_projection_dims,
+            dim_out=self.image_padder.nbands,
+            subsample_in=False,
         )
         # Go down to size of levels
         self.pre_quant_proj = torch.nn.Conv2d(
@@ -114,7 +116,9 @@ class AutoencoderImageCodec(Codec):
         dec = self.decoder(h)
 
         # Handle multi-survey projection
-        channel_mask = torch.ones((z.shape[0], self.n_bands), device=z.device)
+        channel_mask = torch.ones(
+            (z.shape[0], self.image_padder.nbands), device=z.device
+        )
         dec = self.subsample_out(dec, channel_mask)
         return dec
 
@@ -135,7 +139,6 @@ class AutoencoderImageCodec(Codec):
 class ImageCodec(AutoencoderImageCodec, PyTorchModelHubMixin):
     def __init__(
         self,
-        n_bands: int,
         quantizer_levels: list[int],
         hidden_dims: int = 512,
         multisurvey_projection_dims: int = 54,
@@ -167,7 +170,6 @@ class ImageCodec(AutoencoderImageCodec, PyTorchModelHubMixin):
         )
         quantizer = FiniteScalarQuantizer(levels=quantizer_levels)
         super().__init__(
-            n_bands,
             quantizer,
             model.encode,
             model.decode,

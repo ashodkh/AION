@@ -27,3 +27,7 @@ dev = [
 # Ignore space in shape notation for jaxtyping
 # See https://docs.kidger.site/jaxtyping/faq/#flake8-or-ruff-are-throwing-an-error
 ignore = ["F722"]
+
+[tool.setuptools.packages.find]
+include = ["aion*"]
+# Only include the 'aion' package and its subpackages

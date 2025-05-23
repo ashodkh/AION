@@ -10,9 +10,7 @@ from aion.codecs.tokenizers import ImageCodec
 def test_magvit_image_tokenizer(
     embedding_dim, multisurvey_projection_dims, hidden_dims
 ):
-    n_bands = 4
     tokenizer = ImageCodec(
-        n_bands=n_bands,
         quantizer_levels=[1] * embedding_dim,
         hidden_dims=hidden_dims,
         multisurvey_projection_dims=multisurvey_projection_dims,
@@ -25,7 +23,7 @@ def test_magvit_image_tokenizer(
     batch_size = 4
     batch = {
         "image": {
-            "flux": torch.randn(batch_size, n_bands, 96, 96),
+            "flux": torch.randn(batch_size, 4, 96, 96),
             "bands": ["DES-G", "DES-R", "DES-I", "DES-Z"],
         }
     }
@@ -48,9 +46,14 @@ def test_hf_previous_predictions(data_dir):
     reference_decoded_output = torch.load(
         data_dir / "image_codec_decoded_batch.pt", weights_only=False
     )
-
     with torch.no_grad():
-        encoded_output = codec.encode(input_batch)
+        batch = {
+            "image": {
+                "flux": input_batch["image"]["array"],
+                "bands": ["DES-G", "DES-R", "DES-I", "DES-Z"],
+            }
+        }
+        encoded_output = codec.encode(batch)
         decoded_output = codec.decode(
             encoded_output, bands=["DES-G", "DES-R", "DES-I", "DES-Z"]
         )
