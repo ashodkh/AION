@@ -2,7 +2,7 @@ import torch
 from huggingface_hub import PyTorchModelHubMixin
 from jaxtyping import Float
 from torch import Tensor
-from typing import Type, Optional, List
+from typing import Optional, List
 
 from aion.modalities import Image
 from aion.codecs.modules.magvit import MagVitAE
@@ -33,8 +33,7 @@ class AutoencoderImageCodec(Codec):
         range_compression_factor: float = 0.01,
         mult_factor: float = 10.0,
     ):
-        super().__init__()
-        self._quantizer = quantizer
+        super().__init__(Image, quantizer)
         self.range_compression_factor = range_compression_factor
         self.mult_factor = mult_factor
         self.encoder = encoder
@@ -66,14 +65,6 @@ class AutoencoderImageCodec(Codec):
         self.post_quant_proj = torch.nn.Conv2d(
             embedding_dim, hidden_dims, kernel_size=1, stride=1, padding=0
         )
-
-    @property
-    def quantizer(self) -> Quantizer:
-        return self._quantizer
-
-    @property
-    def modality(self) -> Type[Image]:
-        return Image
 
     def _get_survey(self, bands: List[str]) -> str:
         survey = bands[0].split("-")[0]

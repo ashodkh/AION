@@ -1,7 +1,6 @@
 import torch
 from huggingface_hub import PyTorchModelHubMixin
 from jaxtyping import Float, Real
-from typing import Type
 
 from aion.modalities import Spectrum
 from aion.codecs.modules.convnext import ConvNextDecoder1d, ConvNextEncoder1d
@@ -28,8 +27,7 @@ class AutoencoderSpectrumCodec(Codec):
         clip_flux: float | None = None,
         input_scaling: float = 0.2,
     ):
-        super().__init__()
-        self._quantizer = quantizer
+        super().__init__(Spectrum, quantizer)
         self.encoder = encoder
         self.decoder = decoder
         self.normalization_quantizer = normalization_quantizer
@@ -43,14 +41,6 @@ class AutoencoderSpectrumCodec(Codec):
         self.pre_quant_norm = torch.nn.LayerNorm(latent_channels)
         self.quant_conv = torch.nn.Conv1d(latent_channels, embedding_dim, 1)
         self.post_quant_conv = torch.nn.Conv1d(embedding_dim, latent_channels, 1)
-
-    @property
-    def modality(self) -> Type[Spectrum]:
-        return Spectrum
-
-    @property
-    def quantizer(self) -> Quantizer:
-        return self._quantizer
 
     def _encode(self, x: Spectrum) -> Float[torch.Tensor, "b c t"]:
         # Extract fields from Spectrum instance
