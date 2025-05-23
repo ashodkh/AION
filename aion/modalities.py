@@ -144,6 +144,7 @@ class EBV(ScalarModality):
 
     name: ClassVar[str] = "EBV"
 
+
 ScalarModalities = [
     FluxG,
     FluxR,
