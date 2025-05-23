@@ -12,6 +12,7 @@ dependencies = [
     "huggingface_hub[torch]>=0.24.7",
     "jaxtyping>=0.2.28",
     "numpy",
+    "scipy",
     "tokenizers>=0.15.2",
     "torch>=2.4.0",
     "pydantic>=2.10.6",

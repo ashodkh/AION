@@ -1,0 +1,85 @@
+from typing import Type, Optional, Dict, Any
+
+from huggingface_hub import PyTorchModelHubMixin
+from jaxtyping import Float
+from torch import Tensor
+
+from aion.codecs.quantizers import Quantizer
+from aion.codecs.quantizers.scalar import (
+    ScalarLogReservoirQuantizer,
+    ScalarReservoirQuantizer,
+)
+from aion.codecs.tokenizers.base import Codec
+from aion.modalities import ScalarModality, ScalarModalities
+
+
+class BaseScalarIdentityCodec(Codec, PyTorchModelHubMixin):
+    """Codec for scalar quantities.
+
+    A codec that embeds scalar quantities through an identity mapping. A
+    quantizer is applied if specified.
+
+    Args:
+        modality_class: Type[ScalarModality]
+            The modality class this codec is designed for.
+        quantizer: Quantizer
+            Optional quantizer for the scalar values.
+    """
+
+    @property
+    def quantizer(self) -> Quantizer:
+        return self._quantizer
+
+    @property
+    def modality(self) -> Type[ScalarModality]:
+        return self._modality_class
+
+    def _encode(self, x: ScalarModality) -> Float[Tensor, " b"]:
+        return x.value
+
+    def _decode(
+        self, z: Float[Tensor, " b"], **metadata: Optional[Dict[str, Any]]
+    ) -> ScalarModality:
+        return self._modality_class(value=z)
+
+    def load_state_dict(self, state_dict, strict=True):
+        # This function is just because the scalar codecs were saved with 'quantizer' instead of '_quantizer'
+        remapped_state_dict = {
+            (
+                k.replace("quantizer", "_quantizer", 1)
+                if k.startswith("quantizer")
+                else k
+            ): v
+            for k, v in state_dict.items()
+        }
+        return super().load_state_dict(remapped_state_dict, strict=strict)
+
+
+class ScalarCodec(BaseScalarIdentityCodec):
+    def __init__(
+        self,
+        modality: str,
+        codebook_size: int,
+        reservoir_size: int,
+    ):
+        super().__init__()
+        self._modality_class = next(m for m in ScalarModalities if m.name == modality)
+        self._quantizer = ScalarReservoirQuantizer(
+            codebook_size=codebook_size,
+            reservoir_size=reservoir_size,
+        )
+
+
+class LogScalarCodec(BaseScalarIdentityCodec):
+    def __init__(
+        self,
+        modality: str,
+        codebook_size: int,
+        reservoir_size: int,
+    ):
+        super().__init__()
+        self._modality_class = next(m for m in ScalarModalities if m.name == modality)
+        self._quantizer = ScalarLogReservoirQuantizer(
+            codebook_size=codebook_size,
+            reservoir_size=reservoir_size,
+        )
