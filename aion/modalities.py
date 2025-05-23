@@ -30,5 +30,29 @@ class Image(Modality):
         return repr_str
 
 
+class Spectrum(Modality):
+    """Spectrum modality data.
+
+    Represents astronomical spectra with flux measurements, inverse variance, mask, and wavelength information.
+    """
+
+    flux: Float[Tensor, "batch length"] = Field(
+        description="Array of flux measurements of the spectrum."
+    )
+    ivar: Float[Tensor, "batch length"] = Field(
+        description="Array of inverse variance values for the spectrum."
+    )
+    mask: Float[Tensor, "batch length"] = Field(
+        description="Mask array indicating valid/invalid values in the spectrum."
+    )
+    wavelength: Float[Tensor, "batch length"] = Field(
+        description="Array of wavelength values in Angstroms."
+    )
+
+    def __repr__(self) -> str:
+        repr_str = f"Spectrum(flux_shape={list(self.flux.shape)}, wavelength_range=[{self.wavelength.min().item():.1f}, {self.wavelength.max().item():.1f}])"
+        return repr_str
+
+
 # Convenience type for any modality data
-ModalityType = Union[Image,]
+ModalityType = Union[Image, Spectrum]

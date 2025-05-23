@@ -1,14 +1,16 @@
 import torch
 from huggingface_hub import PyTorchModelHubMixin
 from jaxtyping import Float, Real
+from typing import Type
 
+from aion.modalities import Spectrum
 from aion.codecs.modules.convnext import ConvNextDecoder1d, ConvNextEncoder1d
 from aion.codecs.modules.spectrum import LatentSpectralGrid
 from aion.codecs.quantizers import LucidrainsLFQ, Quantizer, ScalarLinearQuantizer
-from aion.codecs.tokenizers.base import QuantizedCodec
+from aion.codecs.tokenizers.base import Codec
 
 
-class AutoencoderSpectrumCodec(QuantizedCodec):
+class AutoencoderSpectrumCodec(Codec):
     """Meta-class for autoencoder codecs for spectra, does not actually contains a network."""
 
     def __init__(
@@ -26,7 +28,8 @@ class AutoencoderSpectrumCodec(QuantizedCodec):
         clip_flux: float | None = None,
         input_scaling: float = 0.2,
     ):
-        super().__init__(quantizer)
+        super().__init__()
+        self._quantizer = quantizer
         self.encoder = encoder
         self.decoder = decoder
         self.normalization_quantizer = normalization_quantizer
@@ -42,16 +45,20 @@ class AutoencoderSpectrumCodec(QuantizedCodec):
         self.post_quant_conv = torch.nn.Conv1d(embedding_dim, latent_channels, 1)
 
     @property
-    def modality(self):
-        return "spectrum"
+    def modality(self) -> Type[Spectrum]:
+        return Spectrum
 
-    def _encode(
-        self,
-        flux: Float[torch.Tensor, " b t"],
-        ivar: Float[torch.Tensor, " b t"],
-        mask: Float[torch.Tensor, " b t"],
-        wavelength: Float[torch.Tensor, " b t"],
-    ) -> tuple[Float[torch.Tensor, " b c t"], Float[torch.Tensor, " b"]]:
+    @property
+    def quantizer(self) -> Quantizer:
+        return self._quantizer
+
+    def _encode(self, x: Spectrum) -> Float[torch.Tensor, "b c t"]:
+        # Extract fields from Spectrum instance
+        flux = x.flux
+        ivar = x.ivar
+        mask = x.mask
+        wavelength = x.wavelength
+
         # Robustify the model against NaN values in the input
         # And add optional cliping of extreme values
         spectrum = torch.nan_to_num(flux)
@@ -91,25 +98,34 @@ class AutoencoderSpectrumCodec(QuantizedCodec):
         h = self.quant_conv(h)
         return h, normalization
 
-    def encode(
-        self,
-        flux: Float[torch.Tensor, " b t"],
-        ivar: Float[torch.Tensor, " b t"],
-        mask: Float[torch.Tensor, " b t"],
-        wavelength: Float[torch.Tensor, " b t"],
-    ) -> Real[torch.Tensor, " b code"]:
-        embedding, normalization = self._encode(flux, ivar, mask, wavelength)
+    def encode(self, x: Spectrum) -> Real[torch.Tensor, " b code"]:
+        # Override to handle normalization token
+        # First verify input type
+        if not isinstance(x, self.modality):
+            raise ValueError(
+                f"Input type {type(x).__name__} does not match the modality of the codec {self.modality.__name__}"
+            )
 
+        # Get embedding using _encode
+        embedding, normalization = self._encode(x)
+
+        # Quantize embedding
         embedding = self.quantizer.encode(embedding)
 
+        # Quantize normalization
         normalization = self.normalization_quantizer.encode(normalization)
+
+        # Concatenate normalization token with embedding
         embedding = torch.cat([normalization[..., None], embedding], dim=-1)
 
         return embedding
 
     def decode(
-        self, z, wavelength: Float[torch.Tensor, " b t"] | None = None
-    ) -> Float[torch.Tensor, " b t"]:
+        self,
+        z: Real[torch.Tensor, " b code"],
+        wavelength: Float[torch.Tensor, " b t"] | None = None,
+    ) -> Spectrum:
+        # Override to handle normalization token extraction
         # Extract the normalization token from the sequence
         norm_token, z = z[..., 0], z[..., 1:]
 
@@ -117,20 +133,14 @@ class AutoencoderSpectrumCodec(QuantizedCodec):
 
         z = self.quantizer.decode(z)
 
-        # The wavelength grid to decode the spectrum
-        return self._decode(z, wavelength=wavelength, normalization=normalization)
+        return self._decode(z, normalization=normalization, wavelength=wavelength)
 
     def _decode(
         self,
         z: Float[torch.Tensor, " b c l"],
+        normalization: Float[torch.Tensor, " b"],
         wavelength: Float[torch.Tensor, " b t"] | None = None,
-        normalization: Float[torch.Tensor, " b"] | None = None,
-        sigmoid_and_round_mask: bool = True,
-    ) -> tuple[
-        Float[torch.Tensor, " b t"],
-        Float[torch.Tensor, " b t"],
-        Float[torch.Tensor, " b t"],
-    ]:
+    ) -> Spectrum:
         h = self.post_quant_conv(z)
         spectra = self.decoder(h)
 
@@ -157,10 +167,16 @@ class AutoencoderSpectrumCodec(QuantizedCodec):
                 10 ** normalization[..., None] - 1.0, 0.1
             )
 
-        if sigmoid_and_round_mask:
-            mask = torch.round(torch.sigmoid(mask)).detach()
+        # Round mask
+        mask = torch.round(torch.sigmoid(mask)).detach()
 
-        return spectra, wavelength, mask
+        # Return Spectrum instance
+        return Spectrum(
+            flux=spectra,
+            ivar=torch.ones_like(spectra),  # We don't decode ivar, so set to ones
+            mask=mask,
+            wavelength=wavelength,
+        )
 
 
 class SpectrumCodec(AutoencoderSpectrumCodec, PyTorchModelHubMixin):
