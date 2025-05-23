@@ -5,68 +5,60 @@ from aion.codecs.tokenizers.scalar import (
     LogScalarCodec,
     ScalarCodec,
 )
+from aion.modalities import (
+    FluxG,
+    FluxR,
+    FluxI,
+    FluxZ,
+    FluxW1,
+    FluxW2,
+    FluxW3,
+    FluxW4,
+    ShapeR,
+    ShapeE1,
+    ShapeE2,
+    EBV,
+)
 
 
 @pytest.mark.parametrize(
-    "modality",
+    "codec_class,modality",
     [
-        "FLUX_G",
-        "FLUX_R",
-        "FLUX_I",
-        "FLUX_Z",
-        "FLUX_W1",
-        "FLUX_W2",
-        "FLUX_W3",
-        "FLUX_W4",
-        "SHAPE_R",
+        # LogScalarCodec tests
+        (LogScalarCodec, FluxG),
+        (LogScalarCodec, FluxR),
+        (LogScalarCodec, FluxI),
+        (LogScalarCodec, FluxZ),
+        (LogScalarCodec, FluxW1),
+        (LogScalarCodec, FluxW2),
+        (LogScalarCodec, FluxW3),
+        (LogScalarCodec, FluxW4),
+        (LogScalarCodec, ShapeR),
+        # ScalarCodec tests
+        (ScalarCodec, ShapeE1),
+        (ScalarCodec, ShapeE2),
+        (ScalarCodec, EBV),
     ],
 )
-def test_log_reservoir_tokenizer(data_dir, modality):
-    codec = LogScalarCodec.from_pretrained(
-        f"polymathic-ai/aion-scalar-{modality.lower().replace('_', '-')}-codec"
+def test_log_reservoir_tokenizer(data_dir, codec_class, modality):
+    codec = codec_class.from_pretrained(
+        f"polymathic-ai/aion-scalar-{modality.name.lower().replace('_', '-')}-codec"
     )
     codec.eval()
 
     input_batch = torch.load(
-        data_dir / f"{modality}_codec_input_batch.pt", weights_only=False
+        data_dir / f"{modality.name}_codec_input_batch.pt", weights_only=False
     )
     reference_encoded_batch = torch.load(
-        data_dir / f"{modality}_codec_encoded_batch.pt", weights_only=False
+        data_dir / f"{modality.name}_codec_encoded_batch.pt", weights_only=False
     )
     reference_decoded_batch = torch.load(
-        data_dir / f"{modality}_codec_decoded_batch.pt", weights_only=False
+        data_dir / f"{modality.name}_codec_decoded_batch.pt", weights_only=False
     )
 
     with torch.no_grad():
-        output = codec.encode({modality: input_batch})
+        output = codec.encode(modality(value=input_batch))
         decoded_output = codec.decode(output)
-        decoded_output = decoded_output[modality]
 
     assert torch.allclose(output, reference_encoded_batch)
-    assert torch.allclose(decoded_output, reference_decoded_batch)
-
-
-@pytest.mark.parametrize("modality", ["SHAPE_E1", "SHAPE_E2", "EBV"])
-def test_reservoir_tokenizer(data_dir, modality):
-    codec = ScalarCodec.from_pretrained(
-        f"polymathic-ai/aion-scalar-{modality.lower().replace('_', '-')}-codec"
-    )
-    codec.eval()
-
-    input_batch = torch.load(
-        data_dir / f"{modality}_codec_input_batch.pt", weights_only=False
-    )
-    reference_encoded_batch = torch.load(
-        data_dir / f"{modality}_codec_encoded_batch.pt", weights_only=False
-    )
-    reference_decoded_batch = torch.load(
-        data_dir / f"{modality}_codec_decoded_batch.pt", weights_only=False
-    )
-
-    with torch.no_grad():
-        output = codec.encode({modality: input_batch})
-        decoded_output = codec.decode(output)
-        decoded_output = decoded_output[modality]
-
-    assert torch.allclose(output, reference_encoded_batch)
-    assert torch.allclose(decoded_output, reference_decoded_batch)
+    assert torch.allclose(decoded_output.value, reference_decoded_batch)
