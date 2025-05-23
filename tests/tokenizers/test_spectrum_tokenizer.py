@@ -30,9 +30,7 @@ def test_hf_previous_predictions(data_dir):
         assert encoded_output.shape == reference_encoded_output.shape
         assert torch.allclose(encoded_output, reference_encoded_output)
 
-        decoded_spectrum = codec.decode(
-            encoded_output
-        )
+        decoded_spectrum = codec.decode(encoded_output)
 
         assert (
             decoded_spectrum.flux.shape
@@ -59,6 +57,5 @@ def test_hf_previous_predictions(data_dir):
             == reference_decoded_output["spectrum"]["mask"].shape
         )
         assert torch.allclose(
-            decoded_spectrum.mask,
-            reference_decoded_output["spectrum"]["mask"].bool()
+            decoded_spectrum.mask, reference_decoded_output["spectrum"]["mask"].bool()
         )
