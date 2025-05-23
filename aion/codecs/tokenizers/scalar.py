@@ -10,10 +10,7 @@ from aion.codecs.quantizers.scalar import (
     ScalarReservoirQuantizer,
 )
 from aion.codecs.tokenizers.base import Codec
-from aion.modalities import (
-    ScalarModality,
-    ScalarModalities
-)
+from aion.modalities import ScalarModality, ScalarModalities
 
 
 class BaseScalarIdentityCodec(Codec, PyTorchModelHubMixin):
@@ -29,17 +26,6 @@ class BaseScalarIdentityCodec(Codec, PyTorchModelHubMixin):
             Optional quantizer for the scalar values.
     """
 
-    def __init__(
-        self,
-        modality: str,
-        quantizer: Optional[Quantizer] = None,
-    ):
-        super().__init__()
-        self._quantizer = quantizer
-        self._modality_class = next(
-            m for m in ScalarModalities if m.name == modality
-        )
-
     @property
     def quantizer(self) -> Quantizer:
         return self._quantizer
@@ -48,13 +34,14 @@ class BaseScalarIdentityCodec(Codec, PyTorchModelHubMixin):
     def modality(self) -> Type[ScalarModality]:
         return self._modality_class
 
-    def _encode(self, x: ScalarModality) -> Float[Tensor, "b"]:
+    def _encode(self, x: ScalarModality) -> Float[Tensor, " b"]:
         return x.value
 
     def _decode(
-        self, z: Float[Tensor, "b"], **metadata: Optional[Dict[str, Any]]
+        self, z: Float[Tensor, " b"], **metadata: Optional[Dict[str, Any]]
     ) -> ScalarModality:
         return self._modality_class(value=z)
+
 
 class ScalarCodec(BaseScalarIdentityCodec):
     def __init__(
@@ -63,11 +50,12 @@ class ScalarCodec(BaseScalarIdentityCodec):
         codebook_size: int,
         reservoir_size: int,
     ):
-        quantizer = ScalarReservoirQuantizer(
+        super().__init__()
+        self._modality_class = next(m for m in ScalarModalities if m.name == modality)
+        self._quantizer = ScalarReservoirQuantizer(
             codebook_size=codebook_size,
             reservoir_size=reservoir_size,
         )
-        super().__init__(modality, quantizer)
 
 
 class LogScalarCodec(BaseScalarIdentityCodec):
@@ -77,8 +65,9 @@ class LogScalarCodec(BaseScalarIdentityCodec):
         codebook_size: int,
         reservoir_size: int,
     ):
-        quantizer = ScalarLogReservoirQuantizer(
+        super().__init__()
+        self._modality_class = next(m for m in ScalarModalities if m.name == modality)
+        self._quantizer = ScalarLogReservoirQuantizer(
             codebook_size=codebook_size,
             reservoir_size=reservoir_size,
         )
-        super().__init__(modality, quantizer)
