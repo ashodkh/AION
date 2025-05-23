@@ -2,7 +2,7 @@ import torch
 from aion.codecs.preprocessing.band_to_index import band_to_index, band_center_max
 
 
-class ImagePadder(object):
+class ImagePadder:
     """Formatter that pads the images to have a fixed number of bands."""
 
     def __init__(self):
