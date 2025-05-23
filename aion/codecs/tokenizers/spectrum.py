@@ -1,9 +1,10 @@
 import torch
+from huggingface_hub import PyTorchModelHubMixin
 from jaxtyping import Float, Real
 
 from aion.codecs.modules.convnext import ConvNextDecoder1d, ConvNextEncoder1d
 from aion.codecs.modules.spectrum import LatentSpectralGrid
-from aion.codecs.quantizers import Quantizer
+from aion.codecs.quantizers import LucidrainsLFQ, Quantizer, ScalarLinearQuantizer
 from aion.codecs.tokenizers.base import QuantizedCodec
 
 
@@ -112,9 +113,9 @@ class AutoencoderSpectrumCodec(QuantizedCodec):
         # Extract the normalization token from the sequence
         norm_token, z = z[..., 0], z[..., 1:]
 
-        normalization = self.normalization_quantizer.reconstruct(norm_token)
+        normalization = self.normalization_quantizer.decode(norm_token)
 
-        z = self.quantizer.reconstruct(z)
+        z = self.quantizer.decode(z)
 
         # The wavelength grid to decode the spectrum
         return self._decode(z, wavelength=wavelength, normalization=normalization)
@@ -162,13 +163,11 @@ class AutoencoderSpectrumCodec(QuantizedCodec):
         return spectra, wavelength, mask
 
 
-class ConvNextAESpectrumCodec(AutoencoderSpectrumCodec):
+class SpectrumCodec(AutoencoderSpectrumCodec, PyTorchModelHubMixin):
     """Spectrum codec based on convnext blocks."""
 
     def __init__(
         self,
-        quantizer: Quantizer,
-        normalization_quantizer: Quantizer,
         encoder_depths: tuple[int, ...] = (3, 3, 9, 3),
         encoder_dims: tuple[int, ...] = (96, 192, 384, 768),
         decoder_depths: tuple[int, ...] = (3, 3, 9, 3),
@@ -181,25 +180,32 @@ class ConvNextAESpectrumCodec(AutoencoderSpectrumCodec):
         clip_ivar: float = 100,
         clip_flux: float | None = None,
         input_scaling: float = 0.2,
+        normalization_range: tuple[float, float] = (-1, 5),
+        codebook_size: int = 1024,
+        dim: int = 10,
     ):
         assert encoder_dims[-1] == latent_channels, (
             "Last encoder dim must match latent_channels"
         )
-        self.encoder = ConvNextEncoder1d(
+        quantizer = LucidrainsLFQ(dim=dim, codebook_size=codebook_size)
+        normalization_quantizer = ScalarLinearQuantizer(
+            codebook_size=codebook_size, range=normalization_range
+        )
+        encoder = ConvNextEncoder1d(
             in_chans=2,
             depths=encoder_depths,
             dims=encoder_dims,
         )
 
-        self.decoder = ConvNextDecoder1d(
+        decoder = ConvNextDecoder1d(
             in_chans=latent_channels,
             depths=decoder_depths,
             dims=decoder_dims,
         )
         super().__init__(
             quantizer=quantizer,
-            encoder=self.encoder,
-            decoder=self.decoder,
+            encoder=encoder,
+            decoder=decoder,
             normalization_quantizer=normalization_quantizer,
             lambda_min=lambda_min,
             resolution=resolution,
