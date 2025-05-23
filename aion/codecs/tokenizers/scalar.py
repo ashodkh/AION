@@ -28,7 +28,7 @@ class BaseScalarIdentityCodec(Codec, PyTorchModelHubMixin):
 
     @property
     def quantizer(self) -> Quantizer:
-        return self.quantizer
+        return self._quantizer
 
     @property
     def modality(self) -> Type[ScalarModality]:
@@ -42,6 +42,18 @@ class BaseScalarIdentityCodec(Codec, PyTorchModelHubMixin):
     ) -> ScalarModality:
         return self._modality_class(value=z)
 
+    def load_state_dict(self, state_dict, strict=True):
+        # This function is just because the scalar codecs were saved with 'quantizer' instead of '_quantizer'
+        remapped_state_dict = {
+            (
+                k.replace("quantizer", "_quantizer", 1)
+                if k.startswith("quantizer")
+                else k
+            ): v
+            for k, v in state_dict.items()
+        }
+        return super().load_state_dict(remapped_state_dict, strict=strict)
+
 
 class ScalarCodec(BaseScalarIdentityCodec):
     def __init__(
@@ -52,7 +64,7 @@ class ScalarCodec(BaseScalarIdentityCodec):
     ):
         super().__init__()
         self._modality_class = next(m for m in ScalarModalities if m.name == modality)
-        self.quantizer = ScalarReservoirQuantizer(
+        self._quantizer = ScalarReservoirQuantizer(
             codebook_size=codebook_size,
             reservoir_size=reservoir_size,
         )
@@ -67,7 +79,7 @@ class LogScalarCodec(BaseScalarIdentityCodec):
     ):
         super().__init__()
         self._modality_class = next(m for m in ScalarModalities if m.name == modality)
-        self.quantizer = ScalarLogReservoirQuantizer(
+        self._quantizer = ScalarLogReservoirQuantizer(
             codebook_size=codebook_size,
             reservoir_size=reservoir_size,
         )
