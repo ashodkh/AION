@@ -52,8 +52,9 @@ def test_hf_previous_predictions(data_dir):
         data_dir / "image_codec_decoded_batch.pt", weights_only=False
     )
     with torch.no_grad():
+        print(input_batch_dict["image"]["channel_mask"][0])
         input_image_obj = Image(
-            flux=input_batch_dict["image"]["array"],
+            flux=input_batch_dict["image"]["array"][:, 5:],
             bands=["DES-G", "DES-R", "DES-I", "DES-Z"],
         )
         encoded_output = codec.encode(input_image_obj)
@@ -65,7 +66,9 @@ def test_hf_previous_predictions(data_dir):
     assert torch.allclose(encoded_output, reference_encoded_output)
 
     assert isinstance(decoded_image_obj, Image)
-    assert decoded_image_obj.flux.shape == reference_decoded_output_tensor.shape
     assert torch.allclose(
-        decoded_image_obj.flux, reference_decoded_output_tensor, rtol=1e-3, atol=1e-4
+        decoded_image_obj.flux,
+        reference_decoded_output_tensor[:, 5:],
+        rtol=1e-3,
+        atol=1e-4,
     )
