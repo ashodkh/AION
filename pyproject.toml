@@ -14,7 +14,7 @@ dependencies = [
     "numpy",
     "tokenizers>=0.15.2",
     "torch>=2.4.0",
-    "vector_quantize_pytorch",
+    "vector_quantize_pytorch==1.14.30",
 ]
 
 [project.optional-dependencies]
