@@ -8,7 +8,7 @@ class ImagePadder:
     def __init__(self):
         self.nbands = max(BAND_TO_INDEX.values()) + 1
 
-    def _check_bands(self, bands):
+    def _check_bands(self, bands: list[str]):
         for band in bands:
             if band not in BAND_TO_INDEX:
                 raise ValueError(
