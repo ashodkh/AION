@@ -146,9 +146,6 @@ class AutoencoderImageCodec(Codec):
                                          If None or not provided, all default bands ('DES-G', 'DES-R', 'DES-I', 'DES-Z',
                                         'HSC-G', 'HSC-R', 'HSC-I', 'HSC-Z', 'HSC-Y')
                                          will be decoded.
-                                         Other image attributes (ivar, psf_fwhm, scale) are not
-                                         reconstructed from input and will use their Pydantic default
-                                         values (typically None) in the output Image object.
         Returns:
             An Image object.
         """
