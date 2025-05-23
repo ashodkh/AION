@@ -1,20 +1,29 @@
 import torch
 from huggingface_hub import PyTorchModelHubMixin
-from jaxtyping import Bool, Float
+from jaxtyping import Float
+from torch import Tensor
+from typing import Type, Optional, List
 
+from aion.modalities import Image
 from aion.codecs.modules.magvit import MagVitAE
 from aion.codecs.modules.subsampler import SubsampledLinear
 from aion.codecs.quantizers import FiniteScalarQuantizer, Quantizer
-from aion.codecs.tokenizers.base import QuantizedCodec
+from aion.codecs.tokenizers.base import Codec
+from aion.codecs.preprocessing.image import (
+    ImagePadder,
+    CenterCrop,
+    RescaleToLegacySurvey,
+    Clamp,
+)
+from aion.codecs.preprocessing.band_to_index import BAND_TO_INDEX
 from aion.codecs.utils import range_compression, reverse_range_compression
 
 
-class AutoencoderImageCodec(QuantizedCodec):
+class AutoencoderImageCodec(Codec):
     """Meta-class for autoencoder codecs for images, does not actually contain a network."""
 
     def __init__(
         self,
-        n_bands: int,
         quantizer: Quantizer,
         encoder: torch.nn.Module,
         decoder: torch.nn.Module,
@@ -24,18 +33,29 @@ class AutoencoderImageCodec(QuantizedCodec):
         range_compression_factor: float = 0.01,
         mult_factor: float = 10.0,
     ):
-        super().__init__(quantizer)
+        super().__init__()
+        self._quantizer = quantizer
         self.range_compression_factor = range_compression_factor
         self.mult_factor = mult_factor
-        self.n_bands = n_bands
         self.encoder = encoder
         self.decoder = decoder
 
+        # Preprocessing
+        self.clamp = Clamp()
+        self.center_crop = CenterCrop(crop_size=96)
+        self.rescaler = RescaleToLegacySurvey()
+
+        # Handle multi-survey projection
+        self.image_padder = ImagePadder()
         self.subsample_in = SubsampledLinear(
-            dim_in=n_bands, dim_out=multisurvey_projection_dims, subsample_in=True
+            dim_in=self.image_padder.nbands,
+            dim_out=multisurvey_projection_dims,
+            subsample_in=True,
         )
         self.subsample_out = SubsampledLinear(
-            dim_in=multisurvey_projection_dims, dim_out=n_bands, subsample_in=False
+            dim_in=multisurvey_projection_dims,
+            dim_out=self.image_padder.nbands,
+            subsample_in=False,
         )
         # Go down to size of levels
         self.pre_quant_proj = torch.nn.Conv2d(
@@ -48,63 +68,98 @@ class AutoencoderImageCodec(QuantizedCodec):
         )
 
     @property
-    def modality(self) -> str:
-        return "image"
+    def quantizer(self) -> Quantizer:
+        return self._quantizer
 
-    def _preprocess_sample(self, x):
+    @property
+    def modality(self) -> Type[Image]:
+        return Image
+
+    def _get_survey(self, bands: List[str]) -> str:
+        survey = bands[0].split("-")[0]
+        return survey
+
+    def _range_compress(self, x: Tensor) -> Tensor:
         x = range_compression(x, self.range_compression_factor)
         x = x * self.mult_factor
         return x
 
-    def _postprocess_sample(self, x):
+    def _reverse_range_compress(self, x: Tensor) -> Tensor:
         x = x / self.mult_factor
         x = reverse_range_compression(x, self.range_compression_factor)
         return x
 
-    def _encode(
-        self,
-        x: Float[torch.Tensor, " b {self.n_bands} w h"],
-        channel_mask: Bool[torch.Tensor, " b {self.n_bands}"],
-    ) -> Float[torch.Tensor, " b c1 w1 h1"]:
-        x = self._preprocess_sample(x)
-        x = self.subsample_in(x, channel_mask)
-        h = self.encoder(x)
+    def _encode(self, x: Image) -> Float[torch.Tensor, "b c1 w1 h1"]:
+        flux_tensor = x.flux
+        bands_in = x.bands
+
+        processed_flux = self.center_crop(flux_tensor)
+        processed_flux = self.clamp(processed_flux, bands_in)
+        processed_flux = self.rescaler.forward(
+            processed_flux, self._get_survey(bands_in)
+        )
+        processed_flux = self._range_compress(processed_flux)
+
+        processed_flux, channel_mask = self.image_padder.forward(
+            processed_flux, bands_in
+        )
+        processed_flux = self.subsample_in(processed_flux, channel_mask)
+
+        h = self.encoder(processed_flux)
         h = self.pre_quant_proj(h)
         return h
 
     def _decode(
-        self,
-        z: Float[torch.Tensor, " b c1 w1 h1"],
-    ) -> Float[torch.Tensor, " b {self.n_bands} w h"]:
-        # Decode the image
+        self, z: Float[torch.Tensor, "b c1 w1 h1"], bands: Optional[List[str]] = None
+    ) -> Image:
         h = self.post_quant_proj(z)
-        dec = self.decoder(h)
-        batch_size = z.shape[0]
-        channel_mask = torch.ones((batch_size, self.n_bands), device=z.device)
-        dec = self.subsample_out(dec, channel_mask)
-        # Undo range compression if necessary
-        dec = self._postprocess_sample(dec)
+        decoded_flux_raw = self.decoder(h)
 
-        return dec
+        full_dim_channel_mask = torch.ones(
+            (z.shape[0], self.image_padder.nbands), device=z.device, dtype=torch.bool
+        )
+        decoded_flux_padded = self.subsample_out(
+            decoded_flux_raw, full_dim_channel_mask
+        )
 
-    def encode(
-        self,
-        x: Float[torch.Tensor, " b c *input_shape"],
-        channel_mask: Bool[torch.Tensor, " b c"],
-    ) -> Float[torch.Tensor, " b c1 *code_shape"]:
-        embedding = self._encode(x, channel_mask)
-        return self.quantizer.encode(embedding)
+        decoded_flux_compressed = self._reverse_range_compress(decoded_flux_padded)
+
+        if bands is None:
+            target_bands = list(BAND_TO_INDEX.keys())
+        else:
+            target_bands = bands
+
+        final_flux = self.image_padder.backward(decoded_flux_compressed, target_bands)
+        final_flux = self.rescaler.backward(final_flux, self._get_survey(target_bands))
+
+        return Image(flux=final_flux, bands=target_bands)
+
+    def decode(
+        self, z: Float[Tensor, "b c1 *code_shape"], bands: Optional[List[str]] = None
+    ) -> Image:
+        """
+        Decodes the given latent tensor `z` back into an Image object.
+
+        Args:
+            z: The latent tensor to decode.
+            bands (Optional[List[str]]): A list of band names to decode.
+                                         If None or not provided, all default bands ('DES-G', 'DES-R', 'DES-I', 'DES-Z',
+                                        'HSC-G', 'HSC-R', 'HSC-I', 'HSC-Z', 'HSC-Y')
+                                         will be decoded.
+        Returns:
+            An Image object.
+        """
+        return super().decode(z, bands=bands)
 
 
 class ImageCodec(AutoencoderImageCodec, PyTorchModelHubMixin):
     def __init__(
         self,
-        n_bands: int,
-        quantizer_levels: list[int],
+        quantizer_levels: List[int],
         hidden_dims: int = 512,
         multisurvey_projection_dims: int = 54,
-        n_compressions: int = 2,  # Number of compressions in the network
-        num_consecutive: int = 4,  # Number of consecutive residual layers per compression
+        n_compressions: int = 2,
+        num_consecutive: int = 4,
         embedding_dim: int = 5,
         range_compression_factor: float = 0.01,
         mult_factor: float = 10.0,
@@ -113,8 +168,7 @@ class ImageCodec(AutoencoderImageCodec, PyTorchModelHubMixin):
         MagViT Autoencoder for images.
 
         Args:
-            n_bands: Number of bands in the input images.
-            quantizer: Quantizer to use.
+            quantizer_levels: Levels for the FiniteScalarQuantizer.
             hidden_dims: Number of hidden dimensions in the network.
             n_compressions: Number of compressions in the network.
             num_consecutive: Number of consecutive residual layers per compression.
@@ -122,7 +176,6 @@ class ImageCodec(AutoencoderImageCodec, PyTorchModelHubMixin):
             range_compression_factor: Range compression factor.
             mult_factor: Multiplication factor.
         """
-        # Get MagViT architecture
         model = MagVitAE(
             n_bands=multisurvey_projection_dims,
             hidden_dims=hidden_dims,
@@ -131,7 +184,6 @@ class ImageCodec(AutoencoderImageCodec, PyTorchModelHubMixin):
         )
         quantizer = FiniteScalarQuantizer(levels=quantizer_levels)
         super().__init__(
-            n_bands,
             quantizer,
             model.encode,
             model.decode,
