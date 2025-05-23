@@ -1,20 +1,18 @@
 import pytest
 import torch
 
-from aion.codecs.tokenizers.image import MagViTAEImageCodec
-from aion.codecs.quantizers import FiniteScalarQuantizer
+from aion.modalities import Image
+from aion.codecs.tokenizers import ImageCodec
 
 
-@pytest.mark.parametrize("n_bands", [3, 10])
 @pytest.mark.parametrize("embedding_dim", [5, 10])
 @pytest.mark.parametrize("multisurvey_projection_dims", [12, 24])
 @pytest.mark.parametrize("hidden_dims", [8, 16])
 def test_magvit_image_tokenizer(
-    n_bands, embedding_dim, multisurvey_projection_dims, hidden_dims
+    embedding_dim, multisurvey_projection_dims, hidden_dims
 ):
-    tokenizer = MagViTAEImageCodec(
-        n_bands=n_bands,
-        quantizer=FiniteScalarQuantizer(levels=[1] * embedding_dim),
+    tokenizer = ImageCodec(
+        quantizer_levels=[1] * embedding_dim,
         hidden_dims=hidden_dims,
         multisurvey_projection_dims=multisurvey_projection_dims,
         n_compressions=2,
@@ -24,34 +22,53 @@ def test_magvit_image_tokenizer(
         mult_factor=10,
     )
     batch_size = 4
-    random_input = torch.randn(batch_size, n_bands, 96, 96)
-    channel_mask = torch.ones(batch_size, n_bands)
-    encoded = tokenizer.encode(random_input, channel_mask)
-    assert encoded.shape == (batch_size, 24, 24)
-    decoded = tokenizer.decode(encoded)
-    assert decoded.shape == random_input.shape
-
-
-def test_previous_predictions():
-    quantizer = FiniteScalarQuantizer(levels=[7, 5, 5, 5, 5])
-    codec = MagViTAEImageCodec(
-        embedding_dim=5,
-        hidden_dims=512,
-        mult_factor=10.0,
-        multisurvey_projection_dims=54,
-        n_bands=9,
-        n_compressions=2,
-        num_consecutive=4,
-        range_compression_factor=0.01,
-        quantizer=quantizer,
+    flux_tensor = torch.randn(batch_size, 4, 96, 96)
+    input_image_obj = Image(
+        flux=flux_tensor,
+        bands=["DES-G", "DES-R", "DES-I", "DES-Z"],
     )
 
-    codec.load_state_dict(torch.load("image_codec.pt"))
-    input_batch = torch.load("image_codec_test_input.pt")
-    reference_output = torch.load("image_codec_test_output.pt")
+    encoded = tokenizer.encode(input_image_obj)
+    assert encoded.shape == (batch_size, 24, 24)
 
+    decoded_image_obj = tokenizer.decode(
+        encoded, bands=["DES-G", "DES-R", "DES-I", "DES-Z"]
+    )
+
+    assert isinstance(decoded_image_obj, Image)
+    assert decoded_image_obj.flux.shape == flux_tensor.shape
+
+
+def test_hf_previous_predictions(data_dir):
+    codec = ImageCodec.from_pretrained("polymathic-ai/aion-image-codec")
+
+    input_batch_dict = torch.load(
+        data_dir / "image_codec_input_batch.pt", weights_only=False
+    )
+    reference_encoded_output = torch.load(
+        data_dir / "image_codec_encoded_batch.pt", weights_only=False
+    )
+    reference_decoded_output_tensor = torch.load(
+        data_dir / "image_codec_decoded_batch.pt", weights_only=False
+    )
     with torch.no_grad():
-        output = codec.encode(
-            input_batch["image"]["array"], input_batch["image"]["channel_mask"]
+        print(input_batch_dict["image"]["channel_mask"][0])
+        input_image_obj = Image(
+            flux=input_batch_dict["image"]["array"][:, 5:],
+            bands=["DES-G", "DES-R", "DES-I", "DES-Z"],
         )
-        assert torch.allclose(output, reference_output)
+        encoded_output = codec.encode(input_image_obj)
+        decoded_image_obj = codec.decode(
+            encoded_output, bands=["DES-G", "DES-R", "DES-I", "DES-Z"]
+        )
+
+    assert encoded_output.shape == reference_encoded_output.shape
+    assert torch.allclose(encoded_output, reference_encoded_output)
+
+    assert isinstance(decoded_image_obj, Image)
+    assert torch.allclose(
+        decoded_image_obj.flux,
+        reference_decoded_output_tensor[:, 5:],
+        rtol=1e-3,
+        atol=1e-4,
+    )
