@@ -26,12 +26,12 @@ def test_magvit_image_tokenizer(
     batch = {
         "image": {
             "flux": torch.randn(batch_size, n_bands, 96, 96),
-            "bands": ["DES_G", "DES_R", "DES_I", "DES_Z"],
+            "bands": ["DES-G", "DES-R", "DES-I", "DES-Z"],
         }
     }
     encoded = tokenizer.encode(batch)
     assert encoded.shape == (batch_size, 24, 24)
-    decoded = tokenizer.decode(encoded, bands=["DES_G", "DES_R", "DES_I", "DES_Z"])
+    decoded = tokenizer.decode(encoded, bands=["DES-G", "DES-R", "DES-I", "DES-Z"])
     random_input = batch["image"]["flux"]
     assert decoded.shape == random_input.shape
 
@@ -52,7 +52,7 @@ def test_hf_previous_predictions(data_dir):
     with torch.no_grad():
         encoded_output = codec.encode(input_batch)
         decoded_output = codec.decode(
-            encoded_output, bands=["DES_G", "DES_R", "DES_I", "DES_Z"]
+            encoded_output, bands=["DES-G", "DES-R", "DES-I", "DES-Z"]
         )
 
     assert encoded_output.shape == reference_encoded_output.shape
