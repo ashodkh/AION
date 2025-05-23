@@ -8,7 +8,7 @@ from aion.modalities import Image
 from aion.codecs.modules.magvit import MagVitAE
 from aion.codecs.modules.subsampler import SubsampledLinear
 from aion.codecs.quantizers import FiniteScalarQuantizer, Quantizer
-from aion.codecs.tokenizers.base import Codec
+from aion.codecs.base import Codec
 from aion.codecs.preprocessing.image import (
     ImagePadder,
     CenterCrop,
