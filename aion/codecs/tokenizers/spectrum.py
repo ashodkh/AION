@@ -168,7 +168,7 @@ class AutoencoderSpectrumCodec(Codec):
             )
 
         # Round mask
-        mask = torch.round(torch.sigmoid(mask)).detach()
+        mask = torch.round(torch.sigmoid(mask)).bool().detach()
 
         # Return Spectrum instance
         return Spectrum(

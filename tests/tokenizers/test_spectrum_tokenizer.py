@@ -30,9 +30,8 @@ def test_hf_previous_predictions(data_dir):
         assert encoded_output.shape == reference_encoded_output.shape
         assert torch.allclose(encoded_output, reference_encoded_output)
 
-        # Decode - the custom decode method handles the wavelength internally
         decoded_spectrum = codec.decode(
-            encoded_output, wavelength=input_batch["lambda"]
+            encoded_output
         )
 
         assert (
@@ -61,7 +60,5 @@ def test_hf_previous_predictions(data_dir):
         )
         assert torch.allclose(
             decoded_spectrum.mask,
-            reference_decoded_output["spectrum"]["mask"],
-            rtol=1e-3,
-            atol=1e-4,
+            reference_decoded_output["spectrum"]["mask"].bool()
         )

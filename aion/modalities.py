@@ -2,7 +2,7 @@
 
 from typing import List, Union
 from pydantic import BaseModel, Field, ConfigDict
-from jaxtyping import Float
+from jaxtyping import Float, Bool
 from torch import Tensor
 
 
@@ -42,7 +42,7 @@ class Spectrum(Modality):
     ivar: Float[Tensor, "batch length"] = Field(
         description="Array of inverse variance values for the spectrum."
     )
-    mask: Float[Tensor, "batch length"] = Field(
+    mask: Bool[Tensor, "batch length"] = Field(
         description="Mask array indicating valid/invalid values in the spectrum."
     )
     wavelength: Float[Tensor, "batch length"] = Field(
