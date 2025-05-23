@@ -2,8 +2,8 @@ import pytest
 import torch
 
 from aion.codecs.tokenizers.scalar import (
-    ScalarLogReservoirCodec,
-    ScalarReservoirCodec,
+    LogScalarCodec,
+    ScalarCodec,
 )
 
 
@@ -22,7 +22,7 @@ from aion.codecs.tokenizers.scalar import (
     ],
 )
 def test_log_reservoir_tokenizer(data_dir, modality):
-    codec = ScalarLogReservoirCodec.from_pretrained(
+    codec = LogScalarCodec.from_pretrained(
         f"polymathic-ai/aion-scalar-{modality.lower().replace('_', '-')}-codec"
     )
     codec.eval()
@@ -48,7 +48,7 @@ def test_log_reservoir_tokenizer(data_dir, modality):
 
 @pytest.mark.parametrize("modality", ["SHAPE_E1", "SHAPE_E2", "EBV"])
 def test_reservoir_tokenizer(data_dir, modality):
-    codec = ScalarReservoirCodec.from_pretrained(
+    codec = ScalarCodec.from_pretrained(
         f"polymathic-ai/aion-scalar-{modality.lower().replace('_', '-')}-codec"
     )
     codec.eval()

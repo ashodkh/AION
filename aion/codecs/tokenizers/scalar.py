@@ -41,7 +41,7 @@ class BaseScalarIdentityCodec(QuantizedCodec, PyTorchModelHubMixin):
         return {self.modality: z}
 
 
-class ScalarReservoirCodec(BaseScalarIdentityCodec):
+class ScalarCodec(BaseScalarIdentityCodec):
     def __init__(self, modality: str, codebook_size: int, reservoir_size: int):
         quantizer = ScalarReservoirQuantizer(
             codebook_size=codebook_size,
@@ -50,7 +50,7 @@ class ScalarReservoirCodec(BaseScalarIdentityCodec):
         super().__init__(modality, quantizer)
 
 
-class ScalarLogReservoirCodec(BaseScalarIdentityCodec):
+class LogScalarCodec(BaseScalarIdentityCodec):
     def __init__(self, modality: str, codebook_size: int, reservoir_size: int):
         quantizer = ScalarLogReservoirQuantizer(
             codebook_size=codebook_size,
