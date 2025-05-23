@@ -40,12 +40,13 @@ from aion.modalities import (
         (ScalarCodec, EBV),
     ],
 )
-def test_log_reservoir_tokenizer(data_dir, codec_class, modality):
+def test_scalar_tokenizer(data_dir, codec_class, modality):
+    
     codec = codec_class.from_pretrained(
         f"polymathic-ai/aion-scalar-{modality.name.lower().replace('_', '-')}-codec"
     )
     codec.eval()
-
+    print(modality, codec.modality, codec.quantizer._index_to_val)
     input_batch = torch.load(
         data_dir / f"{modality.name}_codec_input_batch.pt", weights_only=False
     )

@@ -1,6 +1,6 @@
 """Structured modality data types using Pydantic for type safety and validation."""
 
-from typing import List, Union
+from typing import List, Union, ClassVar
 from pydantic import BaseModel, Field, ConfigDict
 from jaxtyping import Float, Bool
 from torch import Tensor
@@ -61,9 +61,8 @@ class ScalarModality(Modality):
     flux measurements, shape parameters, or other single-valued properties.
     """
 
-    name: str = Field(description="Name of the scalar modality in source survey.")
-
-    value: Float[Tensor, " batch"] = Field(
+    name: ClassVar[str] = ""
+    value: Float[Tensor, "..."] = Field(
         description="Scalar value for each sample in the batch."
     )
 
@@ -75,78 +74,77 @@ class ScalarModality(Modality):
 class FluxG(ScalarModality):
     """G-band flux measurement."""
 
-    name: str = "FLUX_G"
+    name: ClassVar[str] = "FLUX_G"
 
 
 class FluxR(ScalarModality):
     """R-band flux measurement."""
 
-    name: str = "FLUX_R"
+    name: ClassVar[str] = "FLUX_R"
 
 
 class FluxI(ScalarModality):
     """I-band flux measurement."""
 
-    name: str = "FLUX_I"
+    name: ClassVar[str] = "FLUX_I"
 
 
 class FluxZ(ScalarModality):
     """Z-band flux measurement."""
 
-    name: str = "FLUX_Z"
+    name: ClassVar[str] = "FLUX_Z"
 
 
 class FluxW1(ScalarModality):
     """WISE W1-band flux measurement."""
 
-    name: str = "FLUX_W1"
+    name: ClassVar[str] = "FLUX_W1"
 
 
 class FluxW2(ScalarModality):
     """WISE W2-band flux measurement."""
 
-    name: str = "FLUX_W2"
+    name: ClassVar[str] = "FLUX_W2"
 
 
 class FluxW3(ScalarModality):
     """WISE W3-band flux measurement."""
 
-    name: str = "FLUX_W3"
+    name: ClassVar[str] = "FLUX_W3"
 
 
 class FluxW4(ScalarModality):
     """WISE W4-band flux measurement."""
 
-    name: str = "FLUX_W4"
+    name: ClassVar[str] = "FLUX_W4"
 
 
 # Shape parameters
 class ShapeR(ScalarModality):
     """R-band shape measurement (e.g., half-light radius)."""
 
-    name: str = "SHAPE_R"
+    name: ClassVar[str] = "SHAPE_R"
 
 
 class ShapeE1(ScalarModality):
     """First ellipticity component."""
 
-    name: str = "SHAPE_E1"
+    name: ClassVar[str] = "SHAPE_E1"
 
 
 class ShapeE2(ScalarModality):
     """Second ellipticity component."""
 
-    name: str = "SHAPE_E2"
+    name: ClassVar[str] = "SHAPE_E2"
 
 
 # Other scalar properties
 class EBV(ScalarModality):
     """E(B-V) extinction measurement."""
 
-    name: str = "EBV"
+    name: ClassVar[str] = "EBV"
 
-
-ScalarModalityType = Union[
+ScalarModalities = [
     FluxG,
     FluxR,
     FluxI,
