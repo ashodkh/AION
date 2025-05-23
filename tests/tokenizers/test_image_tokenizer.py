@@ -1,6 +1,7 @@
 import pytest
 import torch
 
+from aion.modalities import Image
 from aion.codecs.tokenizers import ImageCodec
 
 
@@ -21,46 +22,50 @@ def test_magvit_image_tokenizer(
         mult_factor=10,
     )
     batch_size = 4
-    batch = {
-        "image": {
-            "flux": torch.randn(batch_size, 4, 96, 96),
-            "bands": ["DES-G", "DES-R", "DES-I", "DES-Z"],
-        }
-    }
-    encoded = tokenizer.encode(batch)
+    flux_tensor = torch.randn(batch_size, 4, 96, 96)
+    input_image_obj = Image(
+        flux=flux_tensor,
+        bands=["DES-G", "DES-R", "DES-I", "DES-Z"],
+    )
+
+    encoded = tokenizer.encode(input_image_obj)
     assert encoded.shape == (batch_size, 24, 24)
-    decoded = tokenizer.decode(encoded, bands=["DES-G", "DES-R", "DES-I", "DES-Z"])
-    random_input = batch["image"]["flux"]
-    assert decoded.shape == random_input.shape
+
+    decoded_image_obj = tokenizer.decode(
+        encoded, bands=["DES-G", "DES-R", "DES-I", "DES-Z"]
+    )
+
+    assert isinstance(decoded_image_obj, Image)
+    assert decoded_image_obj.flux.shape == flux_tensor.shape
 
 
 def test_hf_previous_predictions(data_dir):
     codec = ImageCodec.from_pretrained("polymathic-ai/aion-image-codec")
 
-    input_batch = torch.load(
+    input_batch_dict = torch.load(
         data_dir / "image_codec_input_batch.pt", weights_only=False
     )
     reference_encoded_output = torch.load(
         data_dir / "image_codec_encoded_batch.pt", weights_only=False
     )
-    reference_decoded_output = torch.load(
+    reference_decoded_output_tensor = torch.load(
         data_dir / "image_codec_decoded_batch.pt", weights_only=False
     )
     with torch.no_grad():
-        batch = {
-            "image": {
-                "flux": input_batch["image"]["array"],
-                "bands": ["DES-G", "DES-R", "DES-I", "DES-Z"],
-            }
-        }
-        encoded_output = codec.encode(batch)
-        decoded_output = codec.decode(
+        input_image_obj = Image(
+            flux=input_batch_dict["image"]["array"],
+            bands=["DES-G", "DES-R", "DES-I", "DES-Z"],
+        )
+        encoded_output = codec.encode(input_image_obj)
+        decoded_image_obj = codec.decode(
             encoded_output, bands=["DES-G", "DES-R", "DES-I", "DES-Z"]
         )
 
     assert encoded_output.shape == reference_encoded_output.shape
     assert torch.allclose(encoded_output, reference_encoded_output)
-    assert decoded_output.shape == reference_decoded_output.shape
+
+    assert isinstance(decoded_image_obj, Image)
+    assert decoded_image_obj.flux.shape == reference_decoded_output_tensor.shape
     assert torch.allclose(
-        decoded_output, reference_decoded_output, rtol=1e-3, atol=1e-4
+        decoded_image_obj.flux, reference_decoded_output_tensor, rtol=1e-3, atol=1e-4
     )

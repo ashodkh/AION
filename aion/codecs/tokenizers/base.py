@@ -3,8 +3,9 @@ from abc import ABC, abstractmethod
 import torch
 from jaxtyping import Float
 from torch import Tensor
-from typing import Dict
+from typing import Dict, Type, Optional, Any
 
+from aion.modalities import ModalityType, Modality
 from aion.codecs.quantizers import Quantizer
 
 
@@ -17,27 +18,25 @@ class Codec(ABC, torch.nn.Module):
 
     @property
     @abstractmethod
-    def modality(self) -> str:
+    def modality(self) -> Type[Modality]:
         """Returns the modality key that this codec can operate on."""
         raise NotImplementedError
 
     @abstractmethod
-    def _encode(
-        self, x: Dict[str, Dict[str, Float[Tensor, "b c *input_shape"]]]
-    ) -> Float[Tensor, "b c1 *code_shape"]:
+    def _encode(self, x: ModalityType) -> Float[Tensor, "b c1 *code_shape"]:
         """Function to be implemented by subclasses which
-        takes a batch of input samples and embedds it into a
-        latent space, before any quantization.
+        takes a batch of input samples (as a ModalityType instance)
+        and embedds it into a latent space, before any quantization.
         """
         raise NotImplementedError
 
     @abstractmethod
     def _decode(
-        self, z: Float[Tensor, "b c1 *code_shape"]
-    ) -> Dict[str, Dict[str, Float[Tensor, "b c *input_shape"]]]:
+        self, z: Float[Tensor, "b c1 *code_shape"], **metadata: Optional[Dict[str, Any]]
+    ) -> ModalityType:
         """Function to be implemented by subclasses which
         takes a batch of latent space embeddings (after dequantization)
-        and decodes it into the original input space.
+        and decodes it into the original input space as a ModalityType instance.
         """
         raise NotImplementedError
 
@@ -49,10 +48,13 @@ class Codec(ABC, torch.nn.Module):
         """
         raise NotImplementedError
 
-    def encode(
-        self, x: Dict[str, Dict[str, Float[Tensor, "b c *input_shape"]]]
-    ) -> Float[Tensor, "b c1 *code_shape"]:
+    def encode(self, x: ModalityType) -> Float[Tensor, "b c1 *code_shape"]:
         """Encodes a given batch of samples into latent space."""
+        # Verify that the input type corresponds to the modality of the codec
+        if not isinstance(x, self.modality):
+            raise ValueError(
+                f"Input type {type(x).__name__} does not match the modality of the codec {self.modality.__name__}"
+            )
         embedding = self._encode(x)
         if self.is_quantized:
             return self.quantizer.encode(embedding)
@@ -60,12 +62,12 @@ class Codec(ABC, torch.nn.Module):
             return embedding
 
     def decode(
-        self, z: Float[Tensor, "b c1 *code_shape"]
-    ) -> Dict[str, Dict[str, Float[Tensor, "b c *input_shape"]]]:
-        """Encodes a given batch of samples into latent space."""
-        if self._quantizer is not None:
+        self, z: Float[Tensor, "b c1 *code_shape"], **metadata: Optional[Dict[str, Any]]
+    ) -> ModalityType:
+        """Decodes a given batch of samples from latent space."""
+        if self.quantizer is not None:
             z = self.quantizer.decode(z)
-        return self._decode(z)
+        return self._decode(z, **metadata)
 
     @property
     def is_quantized(self) -> bool:
