@@ -12,8 +12,10 @@ from aion.codecs.quantizers import Quantizer
 class Codec(ABC, torch.nn.Module):
     """Abstract definition of the Codec API.
 
-    A codec embeds a specific type of data into a sequence of either
-    discrete tokens or continuous embedddings, and then decode it back.
+    A Codec is responsible for transforming data of a specific modality into a
+    continuous latent representation, which is then quantized into discrete tokens.
+    It also provides the functionality to decode these tokens back into the
+    original data space.
     """
 
     @property
@@ -26,7 +28,7 @@ class Codec(ABC, torch.nn.Module):
     def _encode(self, x: ModalityType) -> Float[Tensor, "b c1 *code_shape"]:
         """Function to be implemented by subclasses which
         takes a batch of input samples (as a ModalityType instance)
-        and embedds it into a latent space, before any quantization.
+        and embeds it into a latent space, before any quantization.
         """
         raise NotImplementedError
 
@@ -37,39 +39,58 @@ class Codec(ABC, torch.nn.Module):
         """Function to be implemented by subclasses which
         takes a batch of latent space embeddings (after dequantization)
         and decodes it into the original input space as a ModalityType instance.
+
+        Args:
+            z: The batch of latent space embeddings after dequantization.
+            **metadata: Optional keyword arguments containing metadata that might be
+                necessary for the decoding process (e.g., original dimensions,
+                specific modality parameters).
         """
         raise NotImplementedError
 
     @property
     @abstractmethod
     def quantizer(self) -> "Quantizer":
-        """If the codec is quantized, return the quantizer,
-        otherwise returns None.
-        """
+        """Returns the quantizer."""
         raise NotImplementedError
 
     def encode(self, x: ModalityType) -> Float[Tensor, "b c1 *code_shape"]:
-        """Encodes a given batch of samples into latent space."""
+        """Encodes a given batch of samples into latent space.
+        Encodes a batch of input samples into quantized discrete tokens.
+
+        This involves first embedding the input into a continuous latent space
+        using `_encode`, and then quantizing this embedding using the
+        associated `quantizer`.
+
+        Args:
+            x: A batch of input samples (as a ModalityType instance).
+
+        Returns:
+            A tensor representing the quantized discrete tokens.
+        """
         # Verify that the input type corresponds to the modality of the codec
         if not isinstance(x, self.modality):
             raise ValueError(
                 f"Input type {type(x).__name__} does not match the modality of the codec {self.modality.__name__}"
             )
         embedding = self._encode(x)
-        if self.is_quantized:
-            return self.quantizer.encode(embedding)
-        else:
-            return embedding
+        return self.quantizer.encode(embedding)
 
     def decode(
         self, z: Float[Tensor, "b c1 *code_shape"], **metadata: Optional[Dict[str, Any]]
     ) -> ModalityType:
-        """Decodes a given batch of samples from latent space."""
-        if self.quantizer is not None:
-            z = self.quantizer.decode(z)
-        return self._decode(z, **metadata)
+        """Decodes a batch of quantized discrete tokens back into the original data space.
 
-    @property
-    def is_quantized(self) -> bool:
-        """Whether this codec is quantizer or not."""
-        return self.quantizer is not None
+        This involves first dequantizing the tokens using the associated `quantizer`,
+        and then decoding the resulting continuous latent representation using `_decode`.
+
+        Args:
+            z: A tensor representing the quantized discrete tokens.
+            **metadata: Optional keyword arguments containing metadata that might be
+                necessary for the decoding process, passed to `_decode`.
+
+        Returns:
+            The decoded batch of samples as a ModalityType instance.
+        """
+        z = self.quantizer.decode(z)
+        return self._decode(z, **metadata)
