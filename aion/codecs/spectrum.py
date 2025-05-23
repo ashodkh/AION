@@ -7,7 +7,7 @@ from aion.modalities import Spectrum
 from aion.codecs.modules.convnext import ConvNextDecoder1d, ConvNextEncoder1d
 from aion.codecs.modules.spectrum import LatentSpectralGrid
 from aion.codecs.quantizers import LucidrainsLFQ, Quantizer, ScalarLinearQuantizer
-from aion.codecs.tokenizers.base import Codec
+from aion.codecs.base import Codec
 
 
 class AutoencoderSpectrumCodec(Codec):

@@ -8,7 +8,7 @@ from aion.modalities import Image
 from aion.codecs.modules.magvit import MagVitAE
 from aion.codecs.modules.subsampler import SubsampledLinear
 from aion.codecs.quantizers import FiniteScalarQuantizer, Quantizer
-from aion.codecs.tokenizers.base import Codec
+from aion.codecs.base import Codec
 from aion.codecs.preprocessing.image import (
     ImagePadder,
     CenterCrop,
@@ -16,7 +16,6 @@ from aion.codecs.preprocessing.image import (
     Clamp,
 )
 from aion.codecs.preprocessing.band_to_index import BAND_TO_INDEX
-from aion.codecs.utils import range_compression, reverse_range_compression
 
 
 class AutoencoderImageCodec(Codec):
@@ -80,13 +79,19 @@ class AutoencoderImageCodec(Codec):
         return survey
 
     def _range_compress(self, x: Tensor) -> Tensor:
-        x = range_compression(x, self.range_compression_factor)
+        x = (
+            torch.arcsinh(x / self.range_compression_factor)
+            * self.range_compression_factor
+        )
         x = x * self.mult_factor
         return x
 
     def _reverse_range_compress(self, x: Tensor) -> Tensor:
         x = x / self.mult_factor
-        x = reverse_range_compression(x, self.range_compression_factor)
+        x = (
+            torch.sinh(x / self.range_compression_factor)
+            * self.range_compression_factor
+        )
         return x
 
     def _encode(self, x: Image) -> Float[torch.Tensor, "b c1 w1 h1"]:

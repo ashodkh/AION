@@ -2,7 +2,7 @@ import pytest
 import torch
 
 from aion.modalities import Image
-from aion.codecs.tokenizers import ImageCodec
+from aion.codecs import ImageCodec
 
 
 @pytest.mark.parametrize("embedding_dim", [5, 10])

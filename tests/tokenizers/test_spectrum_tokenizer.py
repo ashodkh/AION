@@ -1,7 +1,7 @@
 import torch
 
 from aion.modalities import Spectrum
-from aion.codecs.tokenizers.spectrum import SpectrumCodec
+from aion.codecs import SpectrumCodec
 
 
 def test_hf_previous_predictions(data_dir):

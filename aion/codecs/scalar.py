@@ -9,7 +9,7 @@ from aion.codecs.quantizers.scalar import (
     ScalarLogReservoirQuantizer,
     ScalarReservoirQuantizer,
 )
-from aion.codecs.tokenizers.base import Codec
+from aion.codecs.base import Codec
 from aion.modalities import ScalarModality, ScalarModalities
 
 
