@@ -118,19 +118,16 @@ def test_codec_conversion(
     name: str,
     new_codec: ScalarCodec | LogScalarCodec | MultiScalarCodec,
     legacy_codec: Any,
+    test_data: Dict[str, torch.Tensor],
 ) -> bool:
     """Test that the converted codec produces the same results as the legacy codec."""
     try:
-        # For compressed codecs, we need to handle multi-channel input
-        if isinstance(new_codec, MultiScalarCodec):
-            # Get test values from the first channel's reservoir
-            test_values = legacy_codec.quantizer.quantizers[0]._reservoir[:10]
-            # Create multi-channel test data
-            num_channels = legacy_codec.quantizer.num_quantizers
-            test_values = test_values.unsqueeze(1).expand(-1, num_channels)
-        else:
-            # Get test values from the reservoir
-            test_values = legacy_codec.quantizer._reservoir[:10]  # First 10 values
+        # Get test values from dataset
+        if name not in test_data:
+            print(f"  ❌ {name} not found in test data - this is not normal!")
+            raise ValueError(f"Modality {name} is missing from the dataset")
+
+        test_values = test_data[name][:100]  # Use first 100 samples
 
         # Test encoding
         encoded_values = new_codec.encode(new_codec.modality(value=test_values))
@@ -177,7 +174,9 @@ def upload_codec_to_hub(
             codec.save_pretrained(str(codec_dir))
 
             # Create repo ID
-            repo_id = f"polymathic-ai/aion-gaia-{name.lower().replace('_', '-')}-codec"
+            repo_id = (
+                f"polymathic-ai/aion-scalar-{name.lower().replace('_', '-')}-codec"
+            )
 
             # Create repo (if it doesn't exist)
             create_repo(repo_id, exist_ok=True, private=True)
@@ -197,7 +196,9 @@ def upload_codec_to_hub(
         return False
 
 
-def test_uploaded_codec(name: str, legacy_codec: Any, data_dir: Path) -> bool:
+def test_uploaded_codec(
+    name: str, legacy_codec: Any, test_data: Dict[str, torch.Tensor], data_dir: Path
+) -> bool:
     """Test an uploaded codec by downloading and comparing with legacy codec."""
     try:
         # Determine codec class from quantizer
@@ -205,30 +206,26 @@ def test_uploaded_codec(name: str, legacy_codec: Any, data_dir: Path) -> bool:
 
         if quantizer_class == "ScalarLogReservoirQuantizer":
             downloaded_codec = LogScalarCodec.from_pretrained(
-                f"polymathic-ai/aion-gaia-{name.lower().replace('_', '-')}-codec"
+                f"polymathic-ai/aion-scalar-{name.lower().replace('_', '-')}-codec"
             )
         elif quantizer_class == "ScalarReservoirQuantizer":
             downloaded_codec = ScalarCodec.from_pretrained(
-                f"polymathic-ai/aion-gaia-{name.lower().replace('_', '-')}-codec"
+                f"polymathic-ai/aion-scalar-{name.lower().replace('_', '-')}-codec"
             )
         elif quantizer_class == "MultiScalarCompressedReservoirQuantizer":
             downloaded_codec = MultiScalarCodec.from_pretrained(
-                f"polymathic-ai/aion-gaia-{name.lower().replace('_', '-')}-codec"
+                f"polymathic-ai/aion-scalar-{name.lower().replace('_', '-')}-codec"
             )
         else:
             print(f"  ❌ Unknown quantizer class for {name}: {quantizer_class}")
             return False
 
-        # Generate test input values
-        if quantizer_class == "MultiScalarCompressedReservoirQuantizer":
-            # For compressed codecs, get values from first quantizer's reservoir
-            input_batch = legacy_codec.quantizer.quantizers[0]._reservoir[::100]
-            # Create multi-channel test data
-            num_channels = legacy_codec.quantizer.num_quantizers
-            input_batch = input_batch.unsqueeze(1).expand(-1, num_channels)
-        else:
-            # Every 100th value from reservoir
-            input_batch = legacy_codec.quantizer._reservoir[::100]
+        # Get test data from dataset
+        if name not in test_data:
+            print(f"  ❌ {name} not found in test data - this is not normal!")
+            raise ValueError(f"Modality {name} is missing from the dataset")
+
+        input_batch = test_data[name]  # Use full batch from dataset
 
         # Get reference outputs from legacy codec
         reference_encoded_batch = legacy_codec.encode({name: input_batch})
@@ -279,6 +276,38 @@ def test_uploaded_codec(name: str, legacy_codec: Any, data_dir: Path) -> bool:
         return False
 
 
+def get_test_data_from_dataset() -> Dict[str, torch.Tensor]:
+    """Load test data from the Gaia dataset."""
+    try:
+        from mmoma.datasets.astropile import FastAstroPileLoader
+    except ImportError:
+        print("Error: mmoma library not found. Please ensure it's installed.")
+        sys.exit(1)
+
+    print("📊 Loading test data from Gaia dataset...")
+
+    # Create data loader with batch size 1024
+    loader = FastAstroPileLoader(
+        dataset_path="/mnt/ceph/users/flanusse/myGaia/gaia_v2.py",
+        dataset_name="parallax_sample",
+        batch_size=1024,
+        num_workers=16,
+        train_test_split=1.0,
+        exclude_healpix=[1708, 1709, 1643, 1640, 1642, 2698, 1081, 74, 2096, 132],
+    )
+
+    # Setup and get a single batch
+    loader.setup(stage="fit")
+    iterator = iter(loader.train_dataloader())
+
+    # Get the first batch
+    batch = next(iterator)
+
+    print(f"  ✅ Loaded batch with {len(batch)} modalities")
+
+    return batch
+
+
 def convert_and_upload_codecs(skip_upload: bool = False) -> Dict[str, bool]:
     """Convert legacy codecs to AION format and upload to HuggingFace Hub."""
     print("🔄 Starting codec conversion and upload process...")
@@ -289,6 +318,9 @@ def convert_and_upload_codecs(skip_upload: bool = False) -> Dict[str, bool]:
     # Load legacy codecs
     print("📂 Loading legacy codecs...")
     legacy_codecs = load_legacy_codecs(codec_paths)
+
+    # Load test data from dataset
+    test_data = get_test_data_from_dataset()
 
     results = {}
 
@@ -304,7 +336,7 @@ def convert_and_upload_codecs(skip_upload: bool = False) -> Dict[str, bool]:
             continue
 
         # Test conversion
-        if not test_codec_conversion(name, new_codec, legacy_codec):
+        if not test_codec_conversion(name, new_codec, legacy_codec, test_data):
             results[name] = False
             continue
 
@@ -326,6 +358,9 @@ def test_uploaded_codecs() -> Dict[str, bool]:
     codec_paths = get_codec_paths()
     legacy_codecs = load_legacy_codecs(codec_paths)
 
+    # Load test data from dataset
+    test_data = get_test_data_from_dataset()
+
     # Test data directory
     data_dir = Path(__file__).parent.parent / "tests" / "test_data"
 
@@ -342,7 +377,7 @@ def test_uploaded_codecs() -> Dict[str, bool]:
             results[name] = False
             continue
 
-        results[name] = test_uploaded_codec(name, legacy_codec, data_dir)
+        results[name] = test_uploaded_codec(name, legacy_codec, test_data, data_dir)
 
     return results
 
