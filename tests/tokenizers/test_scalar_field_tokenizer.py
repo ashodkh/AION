@@ -6,7 +6,7 @@ from aion.modalities import ScalarField
 
 def test_scalar_field_tokenizer(data_dir):
     codec = ScalarFieldCodec.from_pretrained("polymathic-ai/aion-scalar-field-codec")
-
+    codec.eval()
     input_batch = torch.load(
         data_dir / "scalar-field_codec_input_batch.pt", weights_only=False
     )
