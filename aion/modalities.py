@@ -224,6 +224,55 @@ class Shape12(ScalarModality):
     name: ClassVar[str] = "i_sdssshape_shape12"
 
 
+# Gaia modalities
+class FluxGGaia(ScalarModality):
+    """Gaia G-band mean flux."""
+
+    name: ClassVar[str] = "phot_g_mean_flux"
+
+
+class FluxBpGaia(ScalarModality):
+    """Gaia BP-band mean flux."""
+
+    name: ClassVar[str] = "phot_bp_mean_flux"
+
+
+class FluxRpGaia(ScalarModality):
+    """Gaia RP-band mean flux."""
+
+    name: ClassVar[str] = "phot_rp_mean_flux"
+
+
+class Parallax(ScalarModality):
+    """Gaia parallax measurement."""
+
+    name: ClassVar[str] = "parallax"
+
+
+class Ra(ScalarModality):
+    """Right ascension coordinate."""
+
+    name: ClassVar[str] = "ra"
+
+
+class Dec(ScalarModality):
+    """Declination coordinate."""
+
+    name: ClassVar[str] = "dec"
+
+
+class XpBp(ScalarModality):
+    """Gaia BP spectral coefficients."""
+
+    name: ClassVar[str] = "bp_coefficients"
+
+
+class XpRp(ScalarModality):
+    """Gaia RP spectral coefficients."""
+
+    name: ClassVar[str] = "rp_coefficients"
+
+
 ScalarModalities = [
     FluxG,
     FluxR,
@@ -250,6 +299,14 @@ ScalarModalities = [
     Shape11,
     Shape22,
     Shape12,
+    FluxGGaia,
+    FluxBpGaia,
+    FluxRpGaia,
+    Parallax,
+    Ra,
+    Dec,
+    XpBp,
+    XpRp,
 ]
 
 # Convenience type for any modality data

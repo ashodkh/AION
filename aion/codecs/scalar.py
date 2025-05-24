@@ -8,6 +8,7 @@ from aion.codecs.quantizers import Quantizer
 from aion.codecs.quantizers.scalar import (
     ScalarLogReservoirQuantizer,
     ScalarReservoirQuantizer,
+    MultiScalarCompressedReservoirQuantizer,
 )
 from aion.codecs.base import Codec
 from aion.modalities import ScalarModality, ScalarModalities
@@ -84,4 +85,25 @@ class LogScalarCodec(BaseScalarIdentityCodec):
             codebook_size=codebook_size,
             reservoir_size=reservoir_size,
             min_log_value=min_log_value,
+        )
+
+
+class MultiScalarCodec(BaseScalarIdentityCodec):
+    def __init__(
+        self,
+        modality: str,
+        compression_fns: list[str],
+        decompression_fns: list[str],
+        codebook_size: int,
+        reservoir_size: int,
+        num_quantizers: int,
+    ):
+        super().__init__()
+        self._modality_class = next(m for m in ScalarModalities if m.name == modality)
+        self._quantizer = MultiScalarCompressedReservoirQuantizer(
+            compression_fns=compression_fns,
+            decompression_fns=decompression_fns,
+            codebook_size=codebook_size,
+            reservoir_size=reservoir_size,
+            num_quantizers=num_quantizers,
         )
