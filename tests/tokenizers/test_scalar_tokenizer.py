@@ -61,6 +61,7 @@ from aion.modalities import (
         (LogScalarCodec, FluxGGaia),
         (LogScalarCodec, FluxBpGaia),
         (LogScalarCodec, FluxRpGaia),
+        (LogScalarCodec, Parallax),
         # ScalarCodec tests
         (ScalarCodec, ShapeE1),
         (ScalarCodec, ShapeE2),
@@ -79,7 +80,6 @@ from aion.modalities import (
         (ScalarCodec, AZ),
         (ScalarCodec, AY),
         # Gaia ScalarCodec tests
-        (ScalarCodec, Parallax),
         (ScalarCodec, Ra),
         (ScalarCodec, Dec),
         # Gaia MultiScalarCodec tests
