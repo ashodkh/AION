@@ -36,7 +36,7 @@ class AutoencoderScalarFieldCodec(Codec):
         # VAE operation ----------------------------------------------------------------
         variational: bool = False,
         # Model outputs ----------------------------------------------------------------
-        output_activation: Optional[Callable] = F.sigmoid,
+        output_activation: Optional[Callable] = torch.sigmoid,
         output_activation_extension: Optional[float] = None,
         # Loss calculation -------------------------------------------------------------
         reconstruction_loss: Callable = F.mse_loss,
