@@ -77,6 +77,22 @@ class Catalog(Modality):
     SHAPE_R: Float[Tensor, "batch n"] = Field(description="Size of the object.")
 
 
+class ScalarField(Modality):
+    """Scalar field modality data.
+
+    Represents 2D scalar fields such as density maps, temperature maps,
+    or other continuous spatial distributions.
+    """
+
+    field: Float[Tensor, "batch height width"] = Field(
+        description="2D scalar field data with spatial dimensions."
+    )
+
+    def __repr__(self) -> str:
+        repr_str = f"ScalarField(field_shape={list(self.field.shape)})"
+        return repr_str
+
+
 class ScalarModality(Modality):
     """Base class for scalar modality data.
 
@@ -341,4 +357,4 @@ ScalarModalities = [
 ]
 
 # Convenience type for any modality data
-ModalityType = Union[Image, Spectrum, ScalarModality, Catalog]
+ModalityType = Union[Image, Spectrum, ScalarModality, Catalog, ScalarField]
