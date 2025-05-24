@@ -144,6 +144,78 @@ class EBV(ScalarModality):
 
     name: ClassVar[str] = "EBV"
 
+# Extinction values from HSC
+class AG(ScalarModality):
+    """HSC a_g extinction."""
+
+    name: ClassVar[str] = "a_g"
+
+class AR(ScalarModality):
+    """HSC a_r extinction."""
+
+    name: ClassVar[str] = "a_r"
+
+class AI(ScalarModality):
+    """HSC a_i extinction."""
+
+    name: ClassVar[str] = "a_i"
+
+class AZ(ScalarModality):
+    """HSC a_z extinction."""
+
+    name: ClassVar[str] = "a_z"
+
+class AY(ScalarModality):
+    """HSC a_y extinction."""
+
+    name: ClassVar[str] = "a_y"
+
+class MagG(ScalarModality):
+    """HSC g-band cmodel magnitude."""
+
+    name: ClassVar[str] = "g_cmodel_mag"
+
+
+class MagR(ScalarModality):
+    """HSC r-band cmodel magnitude."""
+
+    name: ClassVar[str] = "r_cmodel_mag"
+
+
+class MagI(ScalarModality):
+    """HSC i-band cmodel magnitude."""
+
+    name: ClassVar[str] = "i_cmodel_mag"
+
+
+class MagZ(ScalarModality):
+    """HSC z-band cmodel magnitude."""
+
+    name: ClassVar[str] = "z_cmodel_mag"
+
+
+class MagY(ScalarModality):
+    """HSC y-band cmodel magnitude."""
+
+    name: ClassVar[str] = "y_cmodel_mag"
+
+
+class Shape11(ScalarModality):
+    """HSC i-band SDSS shape 11 component."""
+
+    name: ClassVar[str] = "i_sdssshape_shape11"
+
+
+class Shape22(ScalarModality):
+    """HSC i-band SDSS shape 22 component."""
+
+    name: ClassVar[str] = "i_sdssshape_shape22"
+
+
+class Shape12(ScalarModality):
+    """HSC i-band SDSS shape 12 component."""
+
+    name: ClassVar[str] = "i_sdssshape_shape12"
 
 ScalarModalities = [
     FluxG,
@@ -158,22 +230,24 @@ ScalarModalities = [
     ShapeE1,
     ShapeE2,
     EBV,
+    AG,
+    AR,
+    AI,
+    AZ,
+    AY,
+    MagG,
+    MagR,
+    MagI,
+    MagZ,
+    MagY,
+    Shape11,
+    Shape22,
+    Shape12,
 ]
 
 # Convenience type for any modality data
 ModalityType = Union[
     Image,
     Spectrum,
-    FluxG,
-    FluxR,
-    FluxI,
-    FluxZ,
-    FluxW1,
-    FluxW2,
-    FluxW3,
-    FluxW4,
-    ShapeR,
-    ShapeE1,
-    ShapeE2,
-    EBV,
+    ScalarModality
 ]

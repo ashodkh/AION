@@ -18,6 +18,19 @@ from aion.modalities import (
     ShapeE1,
     ShapeE2,
     EBV,
+    MagG,
+    MagR,
+    MagI,
+    MagZ,
+    MagY,
+    Shape11,
+    Shape22,
+    Shape12,
+    AG,
+    AR,
+    AI,
+    AZ,
+    AY,
 )
 
 
@@ -34,10 +47,24 @@ from aion.modalities import (
         (LogScalarCodec, FluxW3),
         (LogScalarCodec, FluxW4),
         (LogScalarCodec, ShapeR),
+
         # ScalarCodec tests
         (ScalarCodec, ShapeE1),
         (ScalarCodec, ShapeE2),
         (ScalarCodec, EBV),
+        (ScalarCodec, MagG),
+        (ScalarCodec, MagR),
+        (ScalarCodec, MagI),
+        (ScalarCodec, MagZ),
+        (ScalarCodec, MagY),
+        (ScalarCodec, Shape11),
+        (ScalarCodec, Shape22),
+        (ScalarCodec, Shape12),
+        (ScalarCodec, AG),
+        (ScalarCodec, AR),
+        (ScalarCodec, AI),
+        (ScalarCodec, AZ),
+        (ScalarCodec, AY),
     ],
 )
 def test_scalar_tokenizer(data_dir, codec_class, modality):
