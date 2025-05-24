@@ -78,18 +78,18 @@ pip install -e .
 ### 🧬 Architecture
 AION-1 employs a two-stage, transformer-based design:
 1. **Modality-Specific Tokenizers** transform raw inputs into discrete tokens
-2. **Unified Encoder–Decoder Transformer** ingests all token streams via a multimodal masked modeling (4M) objective :contentReference[oaicite:0]{index=0}
+2. **Unified Encoder–Decoder Transformer** ingests all token streams via a multimodal masked modeling (4M) objective
 
 Key specifications:
 - **Input token budget:** 256 tokens
 - **Output token budget:** 128 tokens
 - **Training objective:** reconstruct masked tokens across all modalities (4M)
-- **Precision & parallelism:** bfloat16 mixed precision; FSDP (ZeRO-2) on H100 clusters :contentReference[oaicite:1]{index=1}
+- **Precision & parallelism:** bfloat16 mixed precision; FSDP (ZeRO-2) on H100 clusters
 
 ---
 
 ### 🗂️ Supported Modalities
-AION-1’s tokenizers cover **39 distinct data types**, grouped by survey and data category :contentReference[oaicite:2]{index=2}:
+AION-1’s tokenizers cover **39 distinct data types**, grouped by survey and data category
 
 | **Category**            | **Description**                         | **Token Name(s)**        |
 |-------------------------|-----------------------------------------|--------------------------|
