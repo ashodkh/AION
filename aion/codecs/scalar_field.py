@@ -14,6 +14,7 @@ from .quantizers import Quantizer
 from .modules.convblocks import Encoder2d, Decoder2d
 from .modules.ema import ModelEmaV2
 from aion.modalities import ScalarField
+from .preprocessing.image import CenterCrop
 
 
 def _deep_get(dictionary, path, default=None):
@@ -64,6 +65,10 @@ class AutoencoderScalarFieldCodec(Codec):
         # VAE operation ---------------------------------------------------------------
 
         self.variational = variational
+
+        # Preprocessing ----------------------------------------------------------------
+
+        self.center_crop = CenterCrop(crop_size=96)
 
         # Quantisation -----------------------------------------------------------------
 
@@ -116,7 +121,15 @@ class AutoencoderScalarFieldCodec(Codec):
     def _encode(self, x: ScalarField) -> Float[Tensor, "b c h w"]:
         # Extract the field tensor from the ScalarField modality
         field_tensor = x.field
-        h = self.encoder(field_tensor)
+
+        # Add channel dimension if needed (ScalarField is batch x height x width)
+        if field_tensor.dim() == 3:
+            field_tensor = field_tensor.unsqueeze(1)  # Add channel dimension
+
+        # Apply center cropping to 96x96
+        processed_field = self.center_crop(field_tensor)
+
+        h = self.encoder(processed_field)
         h = self.encode_proj(h)
         return h
 
@@ -124,6 +137,11 @@ class AutoencoderScalarFieldCodec(Codec):
         h = self.decode_proj(z)
         x_hat = self.decoder(h)
         x_hat = self._output_activation(x_hat).clip(0.0, 1.0)
+
+        # Remove channel dimension for ScalarField (expects batch x height x width)
+        if x_hat.shape[1] == 1:
+            x_hat = x_hat.squeeze(1)  # Remove channel dimension
+
         return ScalarField(field=x_hat)
 
     def _output_activation(
