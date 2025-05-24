@@ -10,7 +10,7 @@
 
 **Polymathic's Large Omnimodal Model for Astronomy**
 
-[🚀 Quick Start](#-quick-start) • [📦 Installation](#-installation) • [📚 Documentation](#-documentation) • [🤝 Contributing](#-contributing)
+[🚀 Quick Start](#-quick-start) • [📦 Installation](#-installation) • [🔬 Scientific Overview](#-scientific-overview) • [📚 Documentation](#-documentation) • [🤝 Contributing](#-contributing)
 
 </div>
 
@@ -72,6 +72,54 @@ pip install torch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0 --index-url https
 # Then install AION
 pip install -e .
 ```
+
+## 🔬 Scientific Overview
+
+### 🧬 Architecture
+AION-1 employs a two-stage, transformer-based design:
+1. **Modality-Specific Tokenizers** transform raw inputs into discrete tokens
+2. **Unified Encoder–Decoder Transformer** ingests all token streams via a multimodal masked modeling (4M) objective :contentReference[oaicite:0]{index=0}
+
+Key specifications:
+- **Input token budget:** 256 tokens
+- **Output token budget:** 128 tokens
+- **Training objective:** reconstruct masked tokens across all modalities (4M)
+- **Precision & parallelism:** bfloat16 mixed precision; FSDP (ZeRO-2) on H100 clusters :contentReference[oaicite:1]{index=1}
+
+---
+
+### 🗂️ Supported Modalities
+AION-1’s tokenizers cover **39 distinct data types**, grouped by survey and data category :contentReference[oaicite:2]{index=2}:
+
+| **Category**            | **Description**                         | **Token Name(s)**        |
+|-------------------------|-----------------------------------------|--------------------------|
+| **Imaging (2)**         | Legacy Survey, HSC Wide                 | `tok_image_ls`, `tok_image_hsc` |
+| **Catalog (1)**         | Legacy Survey catalog entries           | `catalog`                |
+| **Spectra (2)**         | SDSS, DESI                              | `tok_spectrum_sdss`, `tok_spectrum_desi` |
+| **Gaia (4)**            | BP/RP spectra, parallax, sky coords     | `tok_xp_bp`, `tok_xp_rp`, `tok_parallax`, `tok_ra`, `tok_dec` |
+| **Gaia Photometry (3)** | G/BP/RP flux                            | `tok_flux_g_gaia`, `tok_flux_bp_gaia`, `tok_flux_rp_gaia` |
+| **Legacy Survey (9)**   | g,r,i,z bands & WISE W1–W4 flux, E(B–V) | `tok_flux_g`,…,`tok_flux_w4`, `tok_ebv` |
+| **Legacy Shape (3)**    | Ellipticity components & effective radius | `tok_shape_e1`, `tok_shape_e2`, `tok_shape_r` |
+| **HSC Photometry (5)**  | g,r,i,z,y magnitudes                    | `tok_mag_g`,…,`tok_mag_y` |
+| **HSC Extinction (5)**  | g,r,i,z,y extinctions                   | `tok_a_g`,…,`tok_a_y`    |
+| **HSC Shape (3)**       | Shape components 11,22,12               | `tok_shape11`, `tok_shape22`, `tok_shape12` |
+| **Other (1)**           | Spectroscopic redshift                  | `tok_z`                  |
+
+---
+
+### 📈 Model Variants
+
+| **Variant** | **Encoder Blocks** | **Decoder Blocks** | **Model Dim** | **Heads** | **Total Params** |
+|------------:|-------------------:|-------------------:|--------------:|----------:|-----------------:|
+| **Base**    | 12                 | 12                 | 768           | 12        | 300 M            |
+| **Large**   | 24                 | 24                 | 1024          | 16        | 800 M            |
+| **XLarge**  | 24                 | 24                 | 2048          | 32        | 3 B              |
+
+> **Pretraining**
+> – Global batch size: 8 192
+> – Steps: Base (1.5 days on 64 H100), Large (2.5 days on 100 H100), XLarge (3.5 days on 288 H100)
+> – Optimizer: AdamW, peak LR 2 × 10⁻⁴, linear warmup + cosine decay
+
 
 ## 🏗️ Project Structure
 
