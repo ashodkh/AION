@@ -2,7 +2,7 @@
 
 from typing import List, Union, ClassVar
 from pydantic import BaseModel, Field, ConfigDict
-from jaxtyping import Float, Bool
+from jaxtyping import Float, Bool, Dict
 from torch import Tensor
 
 
@@ -68,6 +68,18 @@ class ScalarModality(Modality):
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(shape={list(self.value.shape)})"
+
+
+# Catalog modality
+class Catalog(Modality):
+    """Catalog modality data.
+
+    Represents a catalog of scalar values.
+    """
+
+    data: Dict[str, Dict[str, Float[Tensor, "b t"]]] = Field(
+        description="Dictionary of dictionaries of scalar values."
+    )
 
 
 # Flux measurements in different bands
@@ -310,4 +322,4 @@ ScalarModalities = [
 ]
 
 # Convenience type for any modality data
-ModalityType = Union[Image, Spectrum, ScalarModality]
+ModalityType = Union[Image, Spectrum, ScalarModality, Catalog]
