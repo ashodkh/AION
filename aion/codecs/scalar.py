@@ -4,7 +4,7 @@ from huggingface_hub import PyTorchModelHubMixin
 from jaxtyping import Float
 from torch import Tensor
 
-from aion.codecs.quantizers import Quantizer
+from aion.codecs.quantizers import Quantizer, ScalarLinearQuantizer
 from aion.codecs.quantizers.scalar import (
     ScalarLogReservoirQuantizer,
     ScalarReservoirQuantizer,
@@ -89,52 +89,6 @@ class LogScalarCodec(BaseScalarIdentityCodec):
 
 
 class MultiScalarCodec(BaseScalarIdentityCodec):
-    """Codec for multi-channel scalar quantities with compression.
-
-    A codec that handles multi-channel scalar modalities using compression
-    and decompression functions before quantization. This is particularly useful
-    for spectral coefficients or other multi-dimensional scalar data that
-    benefits from preprocessing transformations.
-
-    Each channel is quantized independently using a compressed reservoir quantizer,
-    allowing for different statistical distributions across channels while
-    maintaining the ability to handle streaming data.
-
-    Args:
-        modality: str
-            The name of the modality this codec is designed for. Must match
-            a modality name defined in the ScalarModalities registry.
-        compression_fns: list[str]
-            List of PyTorch function names to apply for compression (e.g., ['arcsinh']).
-            These functions are applied in order to transform the data before quantization.
-        decompression_fns: list[str]
-            List of PyTorch function names to apply for decompression (e.g., ['sinh']).
-            These functions are applied in reverse order during decoding to restore
-            the original data range.
-        codebook_size: int
-            The number of codes in each quantizer's codebook.
-        reservoir_size: int
-            The size of the reservoir to keep in memory for each channel's quantizer.
-        num_quantizers: int
-            Number of channels/quantizers to create, corresponding to the number
-            of dimensions in the multi-channel scalar data.
-
-    Note:
-        The compression and decompression functions must be mathematical inverses
-        of each other. The codec will verify this during initialization and raise
-        an assertion error if the functions are not properly inverse.
-
-    Example:
-        >>> codec = MultiScalarCodec(
-        ...     modality="bp_coefficients",
-        ...     compression_fns=["arcsinh"],
-        ...     decompression_fns=["sinh"],
-        ...     codebook_size=1024,
-        ...     reservoir_size=10000,
-        ...     num_quantizers=55
-        ... )
-    """
-
     def __init__(
         self,
         modality: str,
@@ -152,4 +106,14 @@ class MultiScalarCodec(BaseScalarIdentityCodec):
             codebook_size=codebook_size,
             reservoir_size=reservoir_size,
             num_quantizers=num_quantizers,
+        )
+
+
+class GridScalarCodec(BaseScalarIdentityCodec):
+    def __init__(self, modality: str, codebook_size: int):
+        super().__init__()
+        self._modality_class = next(m for m in ScalarModalities if m.name == modality)
+        self._quantizer = ScalarLinearQuantizer(
+            codebook_size=codebook_size,
+            range=(0.0, 1.0),
         )

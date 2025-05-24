@@ -1,11 +1,7 @@
 import pytest
 import torch
 
-from aion.codecs import (
-    LogScalarCodec,
-    ScalarCodec,
-    MultiScalarCodec,
-)
+from aion.codecs import LogScalarCodec, ScalarCodec, MultiScalarCodec, GridScalarCodec
 from aion.modalities import (
     FluxG,
     FluxR,
@@ -19,6 +15,7 @@ from aion.modalities import (
     ShapeE1,
     ShapeE2,
     EBV,
+    Z,
     MagG,
     MagR,
     MagI,
@@ -85,6 +82,8 @@ from aion.modalities import (
         # Gaia MultiScalarCodec tests
         (MultiScalarCodec, XpBp),
         (MultiScalarCodec, XpRp),
+        # Grid tokenizer
+        (GridScalarCodec, Z),
     ],
 )
 def test_scalar_tokenizer(data_dir, codec_class, modality):

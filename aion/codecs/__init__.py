@@ -1,5 +1,5 @@
 from .image import ImageCodec
-from .scalar import ScalarCodec, LogScalarCodec, MultiScalarCodec
+from .scalar import ScalarCodec, LogScalarCodec, MultiScalarCodec, GridScalarCodec
 from .spectrum import SpectrumCodec
 
 
@@ -8,5 +8,6 @@ __all__ = [
     "ScalarCodec",
     "LogScalarCodec",
     "MultiScalarCodec",
+    "GridScalarCodec",
     "SpectrumCodec",
 ]
