@@ -2,7 +2,7 @@
 
 from typing import List, Union, ClassVar
 from pydantic import BaseModel, Field, ConfigDict
-from jaxtyping import Float, Bool, Dict
+from jaxtyping import Float, Bool, Int
 from torch import Tensor
 
 
@@ -54,6 +54,31 @@ class Spectrum(Modality):
         return repr_str
 
 
+# Catalog modality
+class Catalog(Modality):
+    """Catalog modality data.
+
+    Represents a catalog of scalar values from the 
+    Legacy Survey.
+    """
+
+    X: Int[Tensor, "batch n"] = Field(
+        description="X position of the object in the image."
+    )
+    Y: Int[Tensor, "batch n"] = Field(
+        description="Y position of the object in the image."
+    )
+    SHAPE_E1: Float[Tensor, "batch n"] = Field(
+        description="First ellipticity component of the object."
+    )
+    SHAPE_E2: Float[Tensor, "batch n"] = Field(
+        description="Second ellipticity component of the object."
+    )
+    SHAPE_R: Float[Tensor, "batch n"] = Field(
+        description="Size of the object."
+    )
+
+
 class ScalarModality(Modality):
     """Base class for scalar modality data.
 
@@ -68,18 +93,6 @@ class ScalarModality(Modality):
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(shape={list(self.value.shape)})"
-
-
-# Catalog modality
-class Catalog(Modality):
-    """Catalog modality data.
-
-    Represents a catalog of scalar values.
-    """
-
-    data: Dict[str, Dict[str, Float[Tensor, "b t"]]] = Field(
-        description="Dictionary of dictionaries of scalar values."
-    )
 
 
 # Flux measurements in different bands

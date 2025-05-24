@@ -8,47 +8,38 @@ from torch import Tensor
 
 from aion.codecs.base import Codec
 from aion.codecs.quantizers import Quantizer
-from aion.codecs.quantizers.scalar import ComposedScalarQuantizer
+from aion.codecs.quantizers.scalar import ComposedScalarQuantizer, IdentityQuantizer, ScalarReservoirQuantizer
 from aion.modalities import Catalog
 
-__all__ = ["CatalogIdentityCodec"]
 
-
-class CatalogIdentityCodec(Codec, PyTorchModelHubMixin):
+class CatalogCodec(Codec, PyTorchModelHubMixin):
     """Codec for catalog quantities.
 
     A codec that embeds catalog quantities through an identity mapping. A
     quantizer is applied if specified.
-
-    Args:
-        catalog_keys: List[str]
-            List of catalog keys to encode.
-        quantizers: Optional[List[Quantizer]]
-            Optional list of quantizers for each catalog key.
-        mask_value: int
-            Value used to indicate masked/missing data.
     """
 
     def __init__(
         self,
-        catalog_keys: List[str],
-        quantizers: Optional[List[Quantizer]] = None,
-        mask_value: int = 9999,
+        mask_value: int =9999,
     ):
         super().__init__()
         self._modality = Catalog
-        self._catalog_keys = catalog_keys
+        catalog_keys = ['X', 'Y', 'SHAPE_E1', 'SHAPE_E2', 'SHAPE_R']
+        quantizers = [IdentityQuantizer(96),
+                      IdentityQuantizer(96),
+                      ScalarReservoirQuantizer(1024, 100000),
+                      ScalarReservoirQuantizer(1024, 100000),
+                      ScalarReservoirQuantizer(1024, 100000)]
         self.mask_value = mask_value
-        if quantizers:
-            assert len(catalog_keys) == len(quantizers), (
-                "Number of catalog keys and quantizers must match"
-            )
-            _quantizer = OrderedDict()
-            for key, quantizer in zip(catalog_keys, quantizers):
-                _quantizer[key] = quantizer
-            self._quantizer = ComposedScalarQuantizer(_quantizer)
-        else:
-            self._quantizer = None
+        self._catalog_keys = catalog_keys
+        assert len(catalog_keys) == len(quantizers), (
+            "Number of catalog keys and quantizers must match"
+        )
+        _quantizer = OrderedDict()
+        for key, quantizer in zip(catalog_keys, quantizers):
+            _quantizer[key] = quantizer
+        self._quantizer = ComposedScalarQuantizer(_quantizer)
 
     @property
     def modality(self) -> Type[Catalog]:
@@ -61,7 +52,7 @@ class CatalogIdentityCodec(Codec, PyTorchModelHubMixin):
     def _encode(self, x: Catalog) -> Dict[str, Tensor]:
         encoded = OrderedDict()
         for key in self._catalog_keys:
-            catalog_value = x[self.modality][key]
+            catalog_value = getattr(x, key)
             mask = catalog_value != self.mask_value
             catalog_value = catalog_value[mask]
             encoded[key] = catalog_value
@@ -87,7 +78,7 @@ class CatalogIdentityCodec(Codec, PyTorchModelHubMixin):
         return encoded
 
     def _decode(self, z: Dict[str, Tensor]) -> Catalog:
-        return Catalog(data=z)
+        return Catalog(**z)
 
     def decode(self, z: Float[Tensor, "b c1 *code_shape"]) -> Catalog:
         B, LC = z.shape

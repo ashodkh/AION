@@ -623,3 +623,68 @@ class ComposedScalarQuantizer(Quantizer):
     def embedding_dim(self) -> int:
         """Returns the dimension of the codebook entries."""
         return 1
+
+
+class IdentityQuantizer(Quantizer):
+    """
+    Identity quantizer module.
+
+    The identity quantizer module takes a batch of tensors and returns the same tensor.
+
+    Args:
+        codebook_size: int
+            The number of labels to be used as signature for the codebook.
+    """
+
+    def __init__(self, codebook_size: int):
+        super().__init__()
+        self.register_buffer("_codebook_size", torch.tensor(codebook_size))
+
+    def forward(
+        self, z_e: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Performs a forward pass through the vector quantizer.
+        Args:
+            z_e: torch.Tensor (B, C, ...)
+                The input tensor to be quantized.
+        Returns:
+            z_q: torch.Tensor
+                The quantized tensor.
+            loss: torch.Tensor
+                The embedding loss for the quantization.
+            codebook_usage: torch.Tensor
+                The fraction of codes used in the codebook.
+        """
+        codebook_usage = z_e.unique().numel() / self._codebook_size.item()
+        return z_e, torch.tensor(0), torch.tensor(codebook_usage)
+
+    def quantize(self, z: torch.Tensor) -> torch.Tensor:
+        """Quantize the input tensor z, returns corresponding
+        codebook entry.
+        """
+        return z
+
+    def encode(self, z: torch.Tensor) -> torch.Tensor:
+        """Encodes the input tensor z, returns the corresponding codebook index."""
+        return z
+
+    def decode(self, codes: torch.Tensor) -> torch.Tensor:
+        """Decodes the input code index into corresponding codebook entry of
+        dimension (embedding_dim).
+        """
+        return codes
+
+    @property
+    def codebook_size(self) -> int:
+        """Returns the size of the codebook."""
+        return int(self._codebook_size.item())
+
+    @property
+    def codebook(self) -> torch.Tensor:
+        """Returns the codebook."""
+        return torch.arange(self._codebook_size.item())
+
+    @property
+    def embedding_dim(self) -> int:
+        """Returns the dimension of the codebook entries."""
+        return 1
