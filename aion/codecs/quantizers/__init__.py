@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 import torch
 from jaxtyping import Float, Integer
-from vector_quantize_pytorch import LFQ
+from .lookup_free_quantization import LFQ
 
 
 class Quantizer(torch.nn.Module, ABC):
