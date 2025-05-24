@@ -4,6 +4,7 @@ import torch
 from aion.codecs import (
     LogScalarCodec,
     ScalarCodec,
+    MultiScalarCodec,
 )
 from aion.modalities import (
     FluxG,
@@ -31,6 +32,15 @@ from aion.modalities import (
     AI,
     AZ,
     AY,
+    # Gaia modalities
+    FluxGGaia,
+    FluxBpGaia,
+    FluxRpGaia,
+    Parallax,
+    Ra,
+    Dec,
+    XpBp,
+    XpRp,
 )
 
 
@@ -47,6 +57,11 @@ from aion.modalities import (
         (LogScalarCodec, FluxW3),
         (LogScalarCodec, FluxW4),
         (LogScalarCodec, ShapeR),
+        # Gaia LogScalarCodec tests
+        (LogScalarCodec, FluxGGaia),
+        (LogScalarCodec, FluxBpGaia),
+        (LogScalarCodec, FluxRpGaia),
+        (LogScalarCodec, Parallax),
         # ScalarCodec tests
         (ScalarCodec, ShapeE1),
         (ScalarCodec, ShapeE2),
@@ -64,6 +79,12 @@ from aion.modalities import (
         (ScalarCodec, AI),
         (ScalarCodec, AZ),
         (ScalarCodec, AY),
+        # Gaia ScalarCodec tests
+        (ScalarCodec, Ra),
+        (ScalarCodec, Dec),
+        # Gaia MultiScalarCodec tests
+        (MultiScalarCodec, XpBp),
+        (MultiScalarCodec, XpRp),
     ],
 )
 def test_scalar_tokenizer(data_dir, codec_class, modality):
