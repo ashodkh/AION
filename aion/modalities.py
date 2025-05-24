@@ -144,31 +144,37 @@ class EBV(ScalarModality):
 
     name: ClassVar[str] = "EBV"
 
+
 # Extinction values from HSC
 class AG(ScalarModality):
     """HSC a_g extinction."""
 
     name: ClassVar[str] = "a_g"
 
+
 class AR(ScalarModality):
     """HSC a_r extinction."""
 
     name: ClassVar[str] = "a_r"
+
 
 class AI(ScalarModality):
     """HSC a_i extinction."""
 
     name: ClassVar[str] = "a_i"
 
+
 class AZ(ScalarModality):
     """HSC a_z extinction."""
 
     name: ClassVar[str] = "a_z"
 
+
 class AY(ScalarModality):
     """HSC a_y extinction."""
 
     name: ClassVar[str] = "a_y"
+
 
 class MagG(ScalarModality):
     """HSC g-band cmodel magnitude."""
@@ -217,6 +223,7 @@ class Shape12(ScalarModality):
 
     name: ClassVar[str] = "i_sdssshape_shape12"
 
+
 ScalarModalities = [
     FluxG,
     FluxR,
@@ -246,8 +253,4 @@ ScalarModalities = [
 ]
 
 # Convenience type for any modality data
-ModalityType = Union[
-    Image,
-    Spectrum,
-    ScalarModality
-]
+ModalityType = Union[Image, Spectrum, ScalarModality]

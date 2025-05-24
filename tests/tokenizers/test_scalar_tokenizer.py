@@ -47,7 +47,6 @@ from aion.modalities import (
         (LogScalarCodec, FluxW3),
         (LogScalarCodec, FluxW4),
         (LogScalarCodec, ShapeR),
-
         # ScalarCodec tests
         (ScalarCodec, ShapeE1),
         (ScalarCodec, ShapeE2),
