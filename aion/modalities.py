@@ -58,7 +58,7 @@ class Spectrum(Modality):
 class Catalog(Modality):
     """Catalog modality data.
 
-    Represents a catalog of scalar values from the 
+    Represents a catalog of scalar values from the
     Legacy Survey.
     """
 
@@ -74,9 +74,7 @@ class Catalog(Modality):
     SHAPE_E2: Float[Tensor, "batch n"] = Field(
         description="Second ellipticity component of the object."
     )
-    SHAPE_R: Float[Tensor, "batch n"] = Field(
-        description="Size of the object."
-    )
+    SHAPE_R: Float[Tensor, "batch n"] = Field(description="Size of the object.")
 
 
 class ScalarModality(Modality):

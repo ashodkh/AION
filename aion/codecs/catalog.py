@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from typing import Type, Optional, Dict, List
+from typing import Type, Optional, Dict
 
 from huggingface_hub import PyTorchModelHubMixin
 import torch
@@ -8,7 +8,11 @@ from torch import Tensor
 
 from aion.codecs.base import Codec
 from aion.codecs.quantizers import Quantizer
-from aion.codecs.quantizers.scalar import ComposedScalarQuantizer, IdentityQuantizer, ScalarReservoirQuantizer
+from aion.codecs.quantizers.scalar import (
+    ComposedScalarQuantizer,
+    IdentityQuantizer,
+    ScalarReservoirQuantizer,
+)
 from aion.modalities import Catalog
 
 
@@ -21,16 +25,18 @@ class CatalogCodec(Codec, PyTorchModelHubMixin):
 
     def __init__(
         self,
-        mask_value: int =9999,
+        mask_value: int = 9999,
     ):
         super().__init__()
         self._modality = Catalog
-        catalog_keys = ['X', 'Y', 'SHAPE_E1', 'SHAPE_E2', 'SHAPE_R']
-        quantizers = [IdentityQuantizer(96),
-                      IdentityQuantizer(96),
-                      ScalarReservoirQuantizer(1024, 100000),
-                      ScalarReservoirQuantizer(1024, 100000),
-                      ScalarReservoirQuantizer(1024, 100000)]
+        catalog_keys = ["X", "Y", "SHAPE_E1", "SHAPE_E2", "SHAPE_R"]
+        quantizers = [
+            IdentityQuantizer(96),
+            IdentityQuantizer(96),
+            ScalarReservoirQuantizer(1024, 100000),
+            ScalarReservoirQuantizer(1024, 100000),
+            ScalarReservoirQuantizer(1024, 100000),
+        ]
         self.mask_value = mask_value
         self._catalog_keys = catalog_keys
         assert len(catalog_keys) == len(quantizers), (
