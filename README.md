@@ -10,7 +10,7 @@
 
 **Polymathic's Large Omnimodal Model for Astronomy**
 
-[🚀 Quick Start](#-quick-start) • [📦 Installation](#-installation) • [🔬 Scientific Overview](#-scientific-overview) • [📚 Documentation](#-documentation) • [🤝 Contributing](#-contributing)
+[🚀 Quick Start](#-quick-start) • [🔬 Scientific Overview](#-scientific-overview) • [📚 Documentation](#-documentation) • [📦 Advanced Installation](#-advanced-installation) • [🤝 Contributing](#-contributing)
 
 </div>
 
@@ -18,10 +18,17 @@
 
 ## 🎯 Overview
 
-AION-1 is a cutting-edge large omnimodal model specifically designed for astronomical applications. It seamlessly integrates multiple modalities of astronomical data to provide comprehensive insights and analysis.
+AION-1 is a cutting-edge large omnimodal model specifically designed for astronomical surveys. It seamlessly integrates multiple data modalities, and enables simple adaptation to a wide range of astronomical tasks.
+
 
 ## 🚀 Quick Start
 
+Assuming you have PyTorch installed, you can install AION trivially with:
+```bash
+pip install aion
+```
+
+Then you can load the pretrained model and start using it:
 ```python
 from aion import AION
 
@@ -29,48 +36,6 @@ from aion import AION
 model = AION.from_pretrained('aion-base')
 
 # Your astronomical analysis begins here!
-```
-
-## 📦 Installation
-
-AION offers flexible installation options to suit your environment and requirements.
-
-### 🔧 Basic Installation
-
-If you already have PyTorch installed or prefer to manage it separately:
-
-```bash
-pip install -e .
-```
-
-### 🔥 Installation with PyTorch
-
-To install AION with PyTorch included:
-
-```bash
-pip install -e .[torch]
-```
-
-### 👩‍💻 Development Installation
-
-For contributors and developers:
-
-```bash
-pip install -e .[torch,dev]
-```
-
-This includes testing frameworks, linting tools, and development dependencies.
-
-### 🎯 Custom PyTorch Installation
-
-For specific PyTorch versions (e.g., CUDA support):
-
-```bash
-# Install PyTorch with CUDA 12.4 support
-pip install torch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0 --index-url https://download.pytorch.org/whl/cu124
-
-# Then install AION
-pip install -e .
 ```
 
 ## 🔬 Scientific Overview
@@ -120,18 +85,6 @@ AION-1’s tokenizers cover **39 distinct data types**, grouped by survey and da
 > – Steps: Base (1.5 days on 64 H100), Large (2.5 days on 100 H100), XLarge (3.5 days on 288 H100)
 > – Optimizer: AdamW, peak LR 2 × 10⁻⁴, linear warmup + cosine decay
 
-
-## 🏗️ Project Structure
-
-```
-AION/
-├── aion/              # Core library code
-├── notebooks/         # Jupyter notebooks and tutorials
-│   └── Tutorial.ipynb # Interactive tutorial (Try it on Colab!)
-├── tests/            # Test suite
-└── README.md         # You are here! 👋
-```
-
 ## 📚 Documentation
 
 ### 🎓 Tutorials
@@ -139,11 +92,33 @@ AION/
 Start with our interactive tutorial:
 - **[Open in Google Colab](https://colab.research.google.com/github/PolymathicAI/AION/blob/main/notebooks/Tutorial.ipynb)** - Learn AION basics interactively, no local setup required!
 
-### 🔬 Key Features
+## 📦 Advanced Installation
 
-- **Multi-modal Integration**: Process various astronomical data types
-- **Easy-to-use API**: Simple, intuitive interface for researchers
-- **Extensible Framework**: Easy to adapt for specific astronomical tasks
+AION offers flexible installation options to suit your environment and requirements.
+
+To install AION with PyTorch included:
+
+```bash
+pip install aion[torch]
+```
+
+For contributors and developers:
+
+```bash
+pip install aion[torch,dev]
+```
+
+This includes testing frameworks, linting tools, and development dependencies.
+
+For specific PyTorch versions (e.g., CUDA support):
+
+```bash
+# Install PyTorch with CUDA 12.4 support
+pip install torch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0 --index-url https://download.pytorch.org/whl/cu124
+
+# Then install AION
+pip install aion
+```
 
 ## 🤝 Contributing
 
