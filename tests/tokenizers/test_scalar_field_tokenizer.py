@@ -22,5 +22,6 @@ def test_scalar_field_tokenizer(data_dir):
         decoded_output = codec.decode(output)
 
     assert torch.allclose(output, reference_encoded_batch)
-    assert torch.allclose(decoded_output.field, reference_decoded_batch, atol=1e-4, rtol=1e-4)
-    
+    assert torch.allclose(
+        decoded_output.field, reference_decoded_batch, atol=1e-4, rtol=1e-4
+    )

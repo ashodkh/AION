@@ -193,7 +193,7 @@ class ScalarFieldCodec(AutoencoderScalarFieldCodec, PyTorchModelHubMixin):
         ema_model_weights: bool = False,
         ema_decay: float = 0.9999,
         ema_update_freq: int = 1,
-        levels = [8, 5, 5, 5],
+        levels=[8, 5, 5, 5],
         # ------------------------------------------------------------------------------
     ):
         super().__init__(
