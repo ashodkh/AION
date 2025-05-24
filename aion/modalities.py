@@ -145,6 +145,13 @@ class EBV(ScalarModality):
     name: ClassVar[str] = "EBV"
 
 
+# Spectroscopic redshift
+class Z(ScalarModality):
+    """Spectroscopic redshift measurement."""
+
+    name: ClassVar[str] = "Z"
+
+
 # Extinction values from HSC
 class AG(ScalarModality):
     """HSC a_g extinction."""
@@ -286,6 +293,7 @@ ScalarModalities = [
     ShapeE1,
     ShapeE2,
     EBV,
+    Z,
     AG,
     AR,
     AI,
