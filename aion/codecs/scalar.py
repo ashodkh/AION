@@ -108,15 +108,12 @@ class MultiScalarCodec(BaseScalarIdentityCodec):
             num_quantizers=num_quantizers,
         )
 
+
 class GridScalarCodec(BaseScalarIdentityCodec):
-    def __init__(
-        self,
-        modality: str,
-        codebook_size: int
-    ):
+    def __init__(self, modality: str, codebook_size: int):
         super().__init__()
         self._modality_class = next(m for m in ScalarModalities if m.name == modality)
         self._quantizer = ScalarLinearQuantizer(
             codebook_size=codebook_size,
-            range=(0., 1.),
+            range=(0.0, 1.0),
         )
