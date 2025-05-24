@@ -10,7 +10,7 @@ from torch import Tensor
 from huggingface_hub import PyTorchModelHubMixin
 
 from .base import Codec
-from .quantizers import Quantizer
+from .quantizers import Quantizer, FiniteScalarQuantizer
 from .modules.convblocks import Encoder2d, Decoder2d
 from .modules.ema import ModelEmaV2
 from aion.modalities import ScalarField
@@ -158,8 +158,6 @@ class ScalarFieldCodec(AutoencoderScalarFieldCodec, PyTorchModelHubMixin):
         res_hidden_dims: int = 64,
         num_res_layers: int = 2,
         num_downsamples: int = 3,
-        # Quantisation -----------------------------------------------------------------
-        quantizer: Optional[Quantizer] = None,
         # VAE operation ----------------------------------------------------------------
         variational: bool = False,
         # Model outputs ----------------------------------------------------------------
@@ -177,13 +175,13 @@ class ScalarFieldCodec(AutoencoderScalarFieldCodec, PyTorchModelHubMixin):
         ema_model_weights: bool = False,
         ema_decay: float = 0.9999,
         ema_update_freq: int = 1,
+        levels = [8, 5, 5, 5],
         # ------------------------------------------------------------------------------
     ):
         super().__init__(
             encoder_output_dim=encoder_output_dim,
             decoder_input_dim=decoder_input_dim,
             embedding_dim=embedding_dim,
-            quantizer=quantizer,
             variational=variational,
             output_activation=output_activation,
             output_activation_extension=output_activation_extension,
@@ -197,6 +195,9 @@ class ScalarFieldCodec(AutoencoderScalarFieldCodec, PyTorchModelHubMixin):
             ema_decay=ema_decay,
             ema_update_freq=ema_update_freq,
         )
+
+        self._quantizer = FiniteScalarQuantizer(levels=levels)
+
         # Encoder ----------------------------------------------------------------------
         self.encoder = Encoder2d(
             in_dims=1,
