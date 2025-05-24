@@ -76,10 +76,12 @@ class LogScalarCodec(BaseScalarIdentityCodec):
         modality: str,
         codebook_size: int,
         reservoir_size: int,
+        min_log_value: float | None = -3,
     ):
         super().__init__()
         self._modality_class = next(m for m in ScalarModalities if m.name == modality)
         self._quantizer = ScalarLogReservoirQuantizer(
             codebook_size=codebook_size,
             reservoir_size=reservoir_size,
+            min_log_value=min_log_value,
         )
