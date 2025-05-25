@@ -116,7 +116,7 @@ class CodecManager:
 
         Args:
             tokens: Dictionary mapping token keys to tokenized tensors
-            modality: The modality type (e.g., DESISpectrum) to decode into
+            modality_type: The modality type (e.g., DESISpectrum) to decode into
             **metadata: Additional metadata required by the specific codec
                        (e.g., wavelength for spectra, bands for images)
 
