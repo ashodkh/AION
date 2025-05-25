@@ -65,7 +65,9 @@ class TestCodecManager:
         assert "tok_spectrum_desi" in tokens
 
         # Decode
-        decoded_spectrum = manager.decode(tokens, DESISpectrum, wavelength=input_batch["lambda"])
+        decoded_spectrum = manager.decode(
+            tokens, DESISpectrum, wavelength=input_batch["lambda"]
+        )
         assert isinstance(decoded_spectrum, DESISpectrum)
         assert decoded_spectrum.flux.shape == spectrum.flux.shape
 
