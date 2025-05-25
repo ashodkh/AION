@@ -161,4 +161,7 @@ class CodecManager:
         # Decode using the codec with any provided metadata
         decoded_modality = codec.decode(tokens[token_key], **metadata)
 
+        # Casting the decoded modality to be the specific modality type requested
+        decoded_modality = modality_type(**decoded_modality)
+
         return decoded_modality
