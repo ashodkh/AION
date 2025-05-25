@@ -119,7 +119,7 @@ class AutoencoderScalarFieldCodec(Codec):
     def quantizer(self) -> Optional[Quantizer]:
         return self._quantizer
 
-    def _encode(self, x: LegacySurveySegmentationMap) -> Float[Tensor, "b c h w"]:
+    def _encode(self, x: LegacySurveySegmentationMap) -> Float[Tensor, "b c h*w"]:
         # Extract the field tensor from the ScalarField modality
         field_tensor = x.field
 
@@ -132,9 +132,13 @@ class AutoencoderScalarFieldCodec(Codec):
 
         h = self.encoder(processed_field)
         h = self.encode_proj(h)
+        h = h.reshape(h.shape[0], h.shape[1], -1)
         return h
 
-    def _decode(self, z: Float[Tensor, "b c h w"]) -> LegacySurveySegmentationMap:
+    def _decode(self, z: Float[Tensor, "b c h*w"]) -> LegacySurveySegmentationMap:
+        batch_size, embedding_dim, n_tokens = z.shape
+        spatial_size = int(n_tokens**0.5)
+        z = z.reshape(batch_size, embedding_dim, spatial_size, spatial_size)
         h = self.decode_proj(z)
         x_hat = self.decoder(h)
         x_hat = self._output_activation(x_hat).clip(0.0, 1.0)
