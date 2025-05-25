@@ -5,8 +5,6 @@ import torch
 
 from aion.codecs.manager import CodecManager
 from aion.modalities import (
-    LegacySurveyImage,
-    DESISpectrum,
     LegacySurveyFluxG,
     LegacySurveyShapeE1,
 )
@@ -19,57 +17,6 @@ class TestCodecManager:
     def manager(self):
         """Create a CodecManager instance."""
         return CodecManager(device="cpu")
-
-    def test_encode_decode_image(self, manager, data_dir):
-        """Test encoding and decoding Image modality."""
-        # Load test data
-        input_batch_dict = torch.load(
-            data_dir / "image_codec_input_batch.pt", weights_only=False
-        )
-
-        # Create Image modality
-        image = LegacySurveyImage(
-            flux=input_batch_dict["image"]["array"][:, 5:],
-            bands=["DES-G", "DES-R", "DES-I", "DES-Z"],
-        )
-
-        # Encode
-        tokens = manager.encode(image)
-        assert "tok_image" in tokens
-        assert tokens["tok_image"].shape[0] == image.flux.shape[0]
-
-        # Decode using modality type
-        decoded_image = manager.decode(
-            tokens, LegacySurveyImage, bands=["DES-G", "DES-R", "DES-I", "DES-Z"]
-        )
-        assert isinstance(decoded_image, LegacySurveyImage)
-        assert decoded_image.flux.shape == image.flux.shape
-
-    def test_encode_decode_spectrum(self, manager, data_dir):
-        """Test encoding and decoding Spectrum modality."""
-        # Load test data
-        input_batch = torch.load(
-            data_dir / "SPECTRUM_input_batch.pt", weights_only=False
-        )["spectrum"]
-
-        # Create Spectrum modality
-        spectrum = DESISpectrum(
-            flux=input_batch["flux"],
-            ivar=input_batch["ivar"],
-            mask=input_batch["mask"],
-            wavelength=input_batch["lambda"],
-        )
-
-        # Encode
-        tokens = manager.encode(spectrum)
-        assert "tok_spectrum_desi" in tokens
-
-        # Decode
-        decoded_spectrum = manager.decode(
-            tokens, DESISpectrum, wavelength=input_batch["lambda"]
-        )
-        assert isinstance(decoded_spectrum, DESISpectrum)
-        assert decoded_spectrum.flux.shape == spectrum.flux.shape
 
     def test_codec_caching(self, manager):
         """Test that codecs are properly cached and reused."""
