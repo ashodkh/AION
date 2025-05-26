@@ -3,12 +3,21 @@
 Handles dynamic loading and management of codecs for different modalities.
 """
 
-from typing import Dict, Union, Optional, Type
+from typing import Dict, Optional, Type, Union
+
 import torch
 
-from aion.modalities import Modality
 from aion.codecs.base import Codec
 from aion.codecs.config import CODEC_CONFIG
+from aion.modalities import Modality
+
+
+class ModalityTypeError(TypeError):
+    """Error raised when a modality type is not supported."""
+
+
+class TokenKeyError(ValueError):
+    """Error raised when a token key is not found in the tokens dictionary."""
 
 
 class CodecManager:
@@ -53,7 +62,7 @@ class CodecManager:
             ):
                 config = CODEC_CONFIG[modality_type.__base__]
             else:
-                raise ValueError(
+                raise ModalityTypeError(
                     f"No codec configuration found for modality type: {modality_type.__name__}"
                 )
         else:
@@ -76,6 +85,7 @@ class CodecManager:
 
         return codec
 
+    @torch.no_grad()
     def encode(self, *modalities: Modality) -> Dict[str, torch.Tensor]:
         """Encode multiple modalities.
 
@@ -98,7 +108,7 @@ class CodecManager:
             if hasattr(modality, "token_key"):
                 token_key = modality.token_key
             else:
-                raise ValueError(
+                raise ModalityTypeError(
                     f"Modality {type(modality).__name__} does not have a token_key attribute"
                 )
 
@@ -106,6 +116,7 @@ class CodecManager:
 
         return tokens
 
+    @torch.no_grad()
     def decode(
         self,
         tokens: Dict[str, torch.Tensor],
@@ -124,14 +135,14 @@ class CodecManager:
             Decoded modality instance
         """
         if not hasattr(modality_type, "token_key"):
-            raise ValueError(
-                f"Modality type {modality_type.__name__} does not have a token_key attribute"
+            raise ModalityTypeError(
+                f"Modality type {modality_type} does not have a token_key attribute"
             )
 
         token_key = modality_type.token_key
         if token_key not in tokens:
-            raise ValueError(
-                f"Token key '{token_key}' for modality {modality_type.__name__} not found in tokens dictionary"
+            raise TokenKeyError(
+                f"Token key '{token_key}' for modality {modality_type} not found in tokens dictionary"
             )
 
         # Get the appropriate codec
@@ -140,7 +151,7 @@ class CodecManager:
         # Decode using the codec with any provided metadata
         decoded_modality = codec.decode(tokens[token_key], **metadata)
 
-        # Casting the decoded modality to be the specific modality type requested
+        # Cast decoded modality to the correct type
         decoded_modality = modality_type(**decoded_modality.model_dump())
 
         return decoded_modality
