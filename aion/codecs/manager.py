@@ -3,13 +3,14 @@
 Handles dynamic loading and management of codecs for different modalities.
 """
 
-from typing import Dict, Optional, Type, Union
+from dataclasses import asdict
+from functools import lru_cache
 
 import torch
 
 from aion.codecs.base import Codec
-from aion.codecs.config import CODEC_CONFIG
-from aion.modalities import Modality
+from aion.codecs.config import CODEC_CONFIG, CodecType
+from aion.modalities import BaseModality, Modality
 
 
 class ModalityTypeError(TypeError):
@@ -23,9 +24,7 @@ class TokenKeyError(ValueError):
 class CodecManager:
     """Manager for loading and using codecs for different modalities."""
 
-    def __init__(
-        self, device: Union[str, torch.device] = "cpu", cache_dir: Optional[str] = None
-    ):
+    def __init__(self, device: str | torch.device = "cpu"):
         """Initialize the codec manager.
 
         Args:
@@ -33,60 +32,49 @@ class CodecManager:
             cache_dir: Optional cache directory for downloaded models
         """
         self.device = device
-        self.cache_dir = cache_dir
-        self._codecs: Dict[str, Codec] = {}  # Cache by repo_id to handle shared codecs
-        self._modality_to_codec: Dict[
-            Type[Modality], Codec
-        ] = {}  # Map modality types to codecs
 
-    def _get_codec_for_modality(self, modality_type: Type[Modality]) -> Codec:
-        """Get or load the appropriate codec for a modality."""
+    @staticmethod
+    @lru_cache
+    def _load_codec_from_hf(codec_class: CodecType, hf_codec_repo_id: str) -> Codec:
+        """Load a codec from HuggingFace.
+        Although HF download is already cached,
+        the method is cached to avoid reloading the same codec.
 
-        # Check if codec is already loaded for this modality type
-        if modality_type in self._modality_to_codec:
-            return self._modality_to_codec[modality_type]
+        Args:
+            codec_class: The class of the codec to load
+            hf_codec_repo_id: The HuggingFace repository ID of the codec
 
-        # Load codec based on modality type
-        codec = self._load_codec(modality_type)
-        self._modality_to_codec[modality_type] = codec
+        Returns:
+            The loaded codec
+        """
+        codec = codec_class.from_pretrained(hf_codec_repo_id)
+        codec = codec.eval()
         return codec
 
-    def _load_codec(self, modality_type: Type[Modality]) -> Codec:
+    @lru_cache
+    def _load_codec(self, modality_type: type[BaseModality]) -> Codec:
         """Load a codec for the given modality type."""
         # Look up configuration in CODEC_CONFIG
-        if modality_type not in CODEC_CONFIG:
-            # Try base class if specific modality not found
-            if (
-                hasattr(modality_type, "__base__")
-                and modality_type.__base__ in CODEC_CONFIG
-            ):
-                config = CODEC_CONFIG[modality_type.__base__]
-            else:
-                raise ModalityTypeError(
-                    f"No codec configuration found for modality type: {modality_type.__name__}"
-                )
-        else:
+        if modality_type in CODEC_CONFIG:
             config = CODEC_CONFIG[modality_type]
+        elif (
+            hasattr(modality_type, "__base__")
+            and modality_type.__base__ in CODEC_CONFIG
+        ):
+            config = CODEC_CONFIG[modality_type.__base__]
+        else:
+            raise ModalityTypeError(
+                f"No codec configuration found for modality type: {modality_type.__name__}"
+            )
 
-        repo_id = config["repo_id"]
-
-        # Check if this codec has already been loaded (shared codec case)
-        if repo_id in self._codecs:
-            return self._codecs[repo_id]
-
-        codec_class = config["class"]
-
-        # Load from HuggingFace
-        codec = codec_class.from_pretrained(repo_id, cache_dir=self.cache_dir)
-        codec = codec.to(self.device).eval()
-
-        # Cache by repo_id to handle shared codecs
-        self._codecs[repo_id] = codec
+        codec_class = config.codec_class
+        hf_codec_repo_id = config.repo_id
+        codec = self._load_codec_from_hf(codec_class, hf_codec_repo_id)
 
         return codec
 
     @torch.no_grad()
-    def encode(self, *modalities: Modality) -> Dict[str, torch.Tensor]:
+    def encode(self, *modalities: Modality) -> dict[str, torch.Tensor]:
         """Encode multiple modalities.
 
         Args:
@@ -98,29 +86,26 @@ class CodecManager:
         tokens = {}
 
         for modality in modalities:
+            if not isinstance(modality, Modality):
+                raise ModalityTypeError(
+                    f"Modality {type(modality).__name__} does not have a token_key attribute"
+                )
             # Get the appropriate codec
-            codec = self._get_codec_for_modality(type(modality))
+            codec = self._load_codec(type(modality))
+            codec = codec.to(self.device)
 
             # Tokenize the modality
             tokenized = codec.encode(modality)
 
-            # Get the token key for this modality
-            if hasattr(modality, "token_key"):
-                token_key = modality.token_key
-            else:
-                raise ModalityTypeError(
-                    f"Modality {type(modality).__name__} does not have a token_key attribute"
-                )
-
-            tokens[token_key] = tokenized
+            tokens[modality.token_key] = tokenized
 
         return tokens
 
     @torch.no_grad()
     def decode(
         self,
-        tokens: Dict[str, torch.Tensor],
-        modality_type: Type[Modality],
+        tokens: dict[str, torch.Tensor],
+        modality_type: type[Modality],
         **metadata,
     ) -> Modality:
         """Decode tokens back to a modality.
@@ -134,7 +119,7 @@ class CodecManager:
         Returns:
             Decoded modality instance
         """
-        if not hasattr(modality_type, "token_key"):
+        if not issubclass(modality_type, Modality):
             raise ModalityTypeError(
                 f"Modality type {modality_type} does not have a token_key attribute"
             )
@@ -146,12 +131,13 @@ class CodecManager:
             )
 
         # Get the appropriate codec
-        codec = self._get_codec_for_modality(modality_type)
+        codec = self._load_codec(modality_type)
+        codec = codec.to(self.device)
 
         # Decode using the codec with any provided metadata
         decoded_modality = codec.decode(tokens[token_key], **metadata)
 
         # Cast decoded modality to the correct type
-        decoded_modality = modality_type(**decoded_modality.model_dump())
+        decoded_modality = modality_type(**asdict(decoded_modality))
 
         return decoded_modality
