@@ -1,4 +1,3 @@
-from functools import reduce
 from typing import Callable, Optional, Type
 
 import torch
@@ -15,10 +14,6 @@ from .modules.convblocks import Decoder2d, Encoder2d
 from .modules.ema import ModelEmaV2
 from .preprocessing.image import CenterCrop
 from .quantizers import FiniteScalarQuantizer, Quantizer
-
-
-def _deep_get(dictionary, path, default=None):
-    return reduce(lambda d, key: d[key], path.split("."), dictionary)
 
 
 class AutoencoderScalarFieldCodec(Codec):
