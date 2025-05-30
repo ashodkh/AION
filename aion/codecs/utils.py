@@ -5,21 +5,26 @@ from aion.modalities import Modality
 
 ORIGINAL_CONFIG_NAME = hub_mixin.constants.CONFIG_NAME
 ORIGINAL_PYTORCH_WEIGHTS_NAME = hub_mixin.constants.PYTORCH_WEIGHTS_NAME
+ORIGINAL_SAFETENSORS_SINGLE_FILE = hub_mixin.constants.SAFETENSORS_SINGLE_FILE
 
 
 def _override_config_and_weights_names(modality: type[Modality]):
     hub_mixin.constants.CONFIG_NAME = f"codecs/{modality.name}/{ORIGINAL_CONFIG_NAME}"
+    hub_mixin.constants.SAFETENSORS_SINGLE_FILE = (
+        f"codecs/{modality.name}/{ORIGINAL_SAFETENSORS_SINGLE_FILE}"
+    )
     hub_mixin.constants.PYTORCH_WEIGHTS_NAME = (
         f"codecs/{modality.name}/{ORIGINAL_PYTORCH_WEIGHTS_NAME}"
     )
 
 
 def _reset_config_and_weights_names():
-    hub_mixin.constants.CONFIG_NAME = ORIGINAL_CONFIG_NAME
     hub_mixin.constants.PYTORCH_WEIGHTS_NAME = ORIGINAL_PYTORCH_WEIGHTS_NAME
+    hub_mixin.constants.CONFIG_NAME = ORIGINAL_CONFIG_NAME
+    hub_mixin.constants.SAFETENSORS_SINGLE_FILE = ORIGINAL_SAFETENSORS_SINGLE_FILE
 
 
-class PyTorchCodecHubMixin(hub_mixin.PyTorchModelHubMixin):
+class CodecPytorchHubMixin(hub_mixin.PyTorchModelHubMixin):
     """Mixin for PyTorch models that correspond to codecs.
     Codec don't have their own model repo.
     Instead they lie in the transformer model repo as subfolders.
