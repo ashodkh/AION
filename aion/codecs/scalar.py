@@ -1,6 +1,5 @@
 from typing import Type, Optional, Dict, Any
 
-from huggingface_hub import PyTorchModelHubMixin
 from jaxtyping import Float
 from torch import Tensor
 
@@ -11,10 +10,11 @@ from aion.codecs.quantizers.scalar import (
     MultiScalarCompressedReservoirQuantizer,
 )
 from aion.codecs.base import Codec
+from aion.codecs.utils import CodecPytorchHubMixin
 from aion.modalities import Scalar, ScalarModalities
 
 
-class BaseScalarIdentityCodec(Codec, PyTorchModelHubMixin):
+class BaseScalarIdentityCodec(Codec, CodecPytorchHubMixin):
     """Codec for scalar quantities.
 
     A codec that embeds scalar quantities through an identity mapping. A

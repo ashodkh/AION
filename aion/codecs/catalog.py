@@ -1,7 +1,6 @@
 from collections import OrderedDict
-from typing import Type, Optional, Dict
+from typing import Dict, Optional, Type
 
-from huggingface_hub import PyTorchModelHubMixin
 import torch
 from jaxtyping import Float
 from torch import Tensor
@@ -13,10 +12,11 @@ from aion.codecs.quantizers.scalar import (
     IdentityQuantizer,
     ScalarReservoirQuantizer,
 )
+from aion.codecs.utils import CodecPytorchHubMixin
 from aion.modalities import LegacySurveyCatalog
 
 
-class CatalogCodec(Codec, PyTorchModelHubMixin):
+class CatalogCodec(Codec, CodecPytorchHubMixin):
     """Codec for catalog quantities.
 
     A codec that embeds catalog quantities through an identity mapping. A

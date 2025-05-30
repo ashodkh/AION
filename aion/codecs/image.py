@@ -1,5 +1,4 @@
 import torch
-from huggingface_hub import PyTorchModelHubMixin
 from jaxtyping import Float
 from torch import Tensor
 from typing import Type, Optional, List
@@ -16,6 +15,7 @@ from aion.codecs.preprocessing.image import (
     Clamp,
 )
 from aion.codecs.preprocessing.band_to_index import BAND_TO_INDEX
+from aion.codecs.utils import CodecPytorchHubMixin
 
 
 class AutoencoderImageCodec(Codec):
@@ -165,7 +165,51 @@ class AutoencoderImageCodec(Codec):
         return super().decode(z, bands=bands)
 
 
-class ImageCodec(AutoencoderImageCodec, PyTorchModelHubMixin):
+class ImageCodec(AutoencoderImageCodec, CodecPytorchHubMixin):
+    def __init__(
+        self,
+        quantizer_levels: List[int],
+        hidden_dims: int = 512,
+        multisurvey_projection_dims: int = 54,
+        n_compressions: int = 2,
+        num_consecutive: int = 4,
+        embedding_dim: int = 5,
+        range_compression_factor: float = 0.01,
+        mult_factor: float = 10.0,
+    ):
+        """
+        MagViT Autoencoder for images.
+
+        Args:
+            quantizer_levels: Levels for the FiniteScalarQuantizer.
+            hidden_dims: Number of hidden dimensions in the network.
+            n_compressions: Number of compressions in the network.
+            num_consecutive: Number of consecutive residual layers per compression.
+            embedding_dim: Dimension of the latent space.
+            range_compression_factor: Range compression factor.
+            mult_factor: Multiplication factor.
+        """
+        model = MagVitAE(
+            n_bands=multisurvey_projection_dims,
+            hidden_dims=hidden_dims,
+            n_compressions=n_compressions,
+            num_consecutive=num_consecutive,
+        )
+        quantizer = FiniteScalarQuantizer(levels=quantizer_levels)
+        super().__init__(
+            quantizer,
+            model.encode,
+            model.decode,
+            hidden_dims,
+            embedding_dim,
+            multisurvey_projection_dims,
+            range_compression_factor,
+            mult_factor,
+        )
+        self.model = model
+
+
+class NewImageCodec(AutoencoderImageCodec, CodecPytorchHubMixin):
     def __init__(
         self,
         quantizer_levels: List[int],

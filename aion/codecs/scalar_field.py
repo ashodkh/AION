@@ -1,21 +1,20 @@
 from functools import reduce
+from typing import Callable, Optional, Type
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-from typing import Callable, Optional, Type
 from jaxtyping import Float
 from torch import Tensor
 
-from huggingface_hub import PyTorchModelHubMixin
+from aion.codecs.utils import CodecPytorchHubMixin
+from aion.modalities import LegacySurveySegmentationMap
 
 from .base import Codec
-from .quantizers import Quantizer, FiniteScalarQuantizer
-from .modules.convblocks import Encoder2d, Decoder2d
+from .modules.convblocks import Decoder2d, Encoder2d
 from .modules.ema import ModelEmaV2
-from aion.modalities import LegacySurveySegmentationMap
 from .preprocessing.image import CenterCrop
+from .quantizers import FiniteScalarQuantizer, Quantizer
 
 
 def _deep_get(dictionary, path, default=None):
@@ -171,7 +170,7 @@ class AutoencoderScalarFieldCodec(Codec):
 # ======================================================================================
 
 
-class ScalarFieldCodec(AutoencoderScalarFieldCodec, PyTorchModelHubMixin):
+class ScalarFieldCodec(AutoencoderScalarFieldCodec, CodecPytorchHubMixin):
     """Convolutional autoencoder codec for scalar fields."""
 
     def __init__(
