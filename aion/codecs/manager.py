@@ -9,7 +9,7 @@ from functools import lru_cache
 import torch
 
 from aion.codecs.base import Codec
-from aion.codecs.config import CODEC_CONFIG, CodecType
+from aion.codecs.config import MODALITY_CODEC_MAPPING, CodecType, HF_REPO_ID
 from aion.modalities import BaseModality, Modality
 
 
@@ -35,7 +35,9 @@ class CodecManager:
 
     @staticmethod
     @lru_cache
-    def _load_codec_from_hf(codec_class: CodecType, hf_codec_repo_id: str) -> Codec:
+    def _load_codec_from_hf(
+        codec_class: CodecType, modality_type: type[Modality]
+    ) -> Codec:
         """Load a codec from HuggingFace.
         Although HF download is already cached,
         the method is cached to avoid reloading the same codec.
@@ -47,7 +49,8 @@ class CodecManager:
         Returns:
             The loaded codec
         """
-        codec = codec_class.from_pretrained(hf_codec_repo_id)
+
+        codec = codec_class.from_pretrained(HF_REPO_ID, modality=modality_type)
         codec = codec.eval()
         return codec
 
@@ -55,21 +58,19 @@ class CodecManager:
     def _load_codec(self, modality_type: type[BaseModality]) -> Codec:
         """Load a codec for the given modality type."""
         # Look up configuration in CODEC_CONFIG
-        if modality_type in CODEC_CONFIG:
-            config = CODEC_CONFIG[modality_type]
+        if modality_type in MODALITY_CODEC_MAPPING:
+            codec_class = MODALITY_CODEC_MAPPING[modality_type]
         elif (
             hasattr(modality_type, "__base__")
-            and modality_type.__base__ in CODEC_CONFIG
+            and modality_type.__base__ in MODALITY_CODEC_MAPPING
         ):
-            config = CODEC_CONFIG[modality_type.__base__]
+            codec_class = MODALITY_CODEC_MAPPING[modality_type.__base__]
         else:
             raise ModalityTypeError(
                 f"No codec configuration found for modality type: {modality_type.__name__}"
             )
 
-        codec_class = config.codec_class
-        hf_codec_repo_id = config.repo_id
-        codec = self._load_codec_from_hf(codec_class, hf_codec_repo_id)
+        codec = self._load_codec_from_hf(codec_class, modality_type)
 
         return codec
 

@@ -66,6 +66,7 @@ class Image(BaseModality):
     This is an abstract base class. Use LegacySurveyImage or HSCImage instead.
     """
 
+    name: ClassVar[str] = "image"
     flux: Float[Tensor, " batch num_bands height width"]
     bands: list[str]
 
@@ -93,6 +94,7 @@ class Spectrum(BaseModality):
     This is an abstract base class. Use DESISpectrum or SDSSSpectrum instead.
     """
 
+    name: ClassVar[str] = "spectrum"
     flux: Float[Tensor, " batch length"]
     ivar: Float[Tensor, " batch length"]
     mask: Bool[Tensor, " batch length"]
@@ -127,6 +129,7 @@ class LegacySurveyCatalog(Modality):
     Represents a catalog of scalar values from the Legacy Survey.
     """
 
+    name: ClassVar[str] = "catalog"
     X: Int[Tensor, " batch n"]
     Y: Int[Tensor, " batch n"]
     SHAPE_E1: Float[Tensor, " batch n"]
@@ -142,11 +145,12 @@ class LegacySurveySegmentationMap(Modality):
     Represents 2D segmentation maps built from Legacy Survey detections.
     """
 
+    name: ClassVar[str] = "segmentation_map"
     field: Float[Tensor, " batch height width"]
     token_key: ClassVar[str] = "tok_segmap"
 
     def __repr__(self) -> str:
-        repr_str = f"LegacySurveySegmentationMap(field_shape={list(self.field.shape)})"
+        repr_str = f"{self.__class__.__name__}>(field_shape={list(self.field.shape)})"
         return repr_str
 
 
