@@ -1,8 +1,9 @@
 import pytest
 import torch
 
-from aion.modalities import Image
 from aion.codecs import ImageCodec
+from aion.codecs.config import HF_REPO_ID
+from aion.modalities import Image
 
 
 @pytest.mark.parametrize("embedding_dim", [5, 10])
@@ -40,7 +41,7 @@ def test_magvit_image_tokenizer(
 
 
 def test_hf_previous_predictions(data_dir):
-    codec = ImageCodec.from_pretrained("polymathic-ai/aion-image-codec")
+    codec = ImageCodec.from_pretrained(HF_REPO_ID, modality=Image)
 
     input_batch_dict = torch.load(
         data_dir / "image_codec_input_batch.pt", weights_only=False
@@ -52,7 +53,6 @@ def test_hf_previous_predictions(data_dir):
         data_dir / "image_codec_decoded_batch.pt", weights_only=False
     )
     with torch.no_grad():
-        print(input_batch_dict["image"]["channel_mask"][0])
         input_image_obj = Image(
             flux=input_batch_dict["image"]["array"][:, 5:],
             bands=["DES-G", "DES-R", "DES-I", "DES-Z"],

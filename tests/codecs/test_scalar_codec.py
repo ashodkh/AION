@@ -1,43 +1,44 @@
 import pytest
 import torch
 
-from aion.codecs import LogScalarCodec, ScalarCodec, MultiScalarCodec, GridScalarCodec
+from aion.codecs import GridScalarCodec, LogScalarCodec, MultiScalarCodec, ScalarCodec
+from aion.codecs.config import HF_REPO_ID
 from aion.modalities import (
+    HSCAG,
+    HSCAI,
+    HSCAR,
+    HSCAY,
+    HSCAZ,
+    Dec,
+    GaiaFluxBp,
+    # Gaia modalities
+    GaiaFluxG,
+    GaiaFluxRp,
+    GaiaParallax,
+    GaiaXpBp,
+    GaiaXpRp,
+    HSCMagG,
+    HSCMagI,
+    HSCMagR,
+    HSCMagY,
+    HSCMagZ,
+    HSCShape11,
+    HSCShape12,
+    HSCShape22,
+    LegacySurveyEBV,
     LegacySurveyFluxG,
-    LegacySurveyFluxR,
     LegacySurveyFluxI,
-    LegacySurveyFluxZ,
+    LegacySurveyFluxR,
     LegacySurveyFluxW1,
     LegacySurveyFluxW2,
     LegacySurveyFluxW3,
     LegacySurveyFluxW4,
-    LegacySurveyShapeR,
+    LegacySurveyFluxZ,
     LegacySurveyShapeE1,
     LegacySurveyShapeE2,
-    LegacySurveyEBV,
-    Z,
-    HSCMagG,
-    HSCMagR,
-    HSCMagI,
-    HSCMagZ,
-    HSCMagY,
-    HSCShape11,
-    HSCShape22,
-    HSCShape12,
-    HSCAG,
-    HSCAR,
-    HSCAI,
-    HSCAZ,
-    HSCAY,
-    # Gaia modalities
-    GaiaFluxG,
-    GaiaFluxBp,
-    GaiaFluxRp,
-    GaiaParallax,
+    LegacySurveyShapeR,
     Ra,
-    Dec,
-    GaiaXpBp,
-    GaiaXpRp,
+    Z,
 )
 
 
@@ -87,9 +88,7 @@ from aion.modalities import (
     ],
 )
 def test_scalar_tokenizer(data_dir, codec_class, modality):
-    codec = codec_class.from_pretrained(
-        f"polymathic-ai/aion-scalar-{modality.name.lower().replace('_', '-')}-codec"
-    )
+    codec = codec_class.from_pretrained(HF_REPO_ID, modality=modality)
     codec.eval()
     input_batch = torch.load(
         data_dir / f"{modality.name}_codec_input_batch.pt", weights_only=False

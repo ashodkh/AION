@@ -3,9 +3,11 @@ import torch
 from aion.codecs import CatalogCodec
 from aion.modalities import LegacySurveyCatalog
 
+from aion.codecs.config import HF_REPO_ID
+
 
 def test_catalog_tokenizer(data_dir):
-    codec = CatalogCodec.from_pretrained("polymathic-ai/aion-catalog-codec")
+    codec = CatalogCodec.from_pretrained(HF_REPO_ID, modality=LegacySurveyCatalog)
     codec.eval()
     input_batch = torch.load(
         data_dir / "catalog_codec_input_batch.pt", weights_only=False
