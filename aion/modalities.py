@@ -49,18 +49,14 @@ __all__ = [
 ]
 
 
-class BaseModality(ABC):
+class Modality(ABC):
     """Base class for all modality data types."""
-
-
-class Modality(BaseModality, ABC):
-    """Base class for all token modalities."""
 
     token_key: ClassVar[str] = ""
 
 
 @dataclass
-class Image(BaseModality):
+class Image(Modality):
     """Base class for image modality data.
 
     This is an abstract base class. Use LegacySurveyImage or HSCImage instead.
@@ -75,20 +71,20 @@ class Image(BaseModality):
         return repr_str
 
 
-class HSCImage(Image, Modality):
+class HSCImage(Image):
     """HSC image modality data."""
 
     token_key: ClassVar[str] = "tok_image_hsc"
 
 
-class LegacySurveyImage(Image, Modality):
+class LegacySurveyImage(Image):
     """Legacy Survey image modality data."""
 
     token_key: ClassVar[str] = "tok_image"
 
 
 @dataclass
-class Spectrum(BaseModality):
+class Spectrum(Modality):
     """Base class for spectrum modality data.
 
     This is an abstract base class. Use DESISpectrum or SDSSSpectrum instead.
@@ -109,13 +105,13 @@ class Spectrum(BaseModality):
         return repr_str
 
 
-class DESISpectrum(Spectrum, Modality):
+class DESISpectrum(Spectrum):
     """DESI spectrum modality data."""
 
     token_key: ClassVar[str] = "tok_spectrum_desi"
 
 
-class SDSSSpectrum(Spectrum, Modality):
+class SDSSSpectrum(Spectrum):
     """SDSS spectrum modality data."""
 
     token_key: ClassVar[str] = "tok_spectrum_sdss"
