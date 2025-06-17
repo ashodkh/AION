@@ -10,7 +10,7 @@ import torch
 
 from aion.codecs.base import Codec
 from aion.codecs.config import MODALITY_CODEC_MAPPING, CodecType, HF_REPO_ID
-from aion.modalities import BaseModality, Modality
+from aion.modalities import Modality
 
 
 class ModalityTypeError(TypeError):
@@ -55,7 +55,7 @@ class CodecManager:
         return codec
 
     @lru_cache
-    def _load_codec(self, modality_type: type[BaseModality]) -> Codec:
+    def _load_codec(self, modality_type: type[Modality]) -> Codec:
         """Load a codec for the given modality type."""
         # Look up configuration in CODEC_CONFIG
         if modality_type in MODALITY_CODEC_MAPPING:
