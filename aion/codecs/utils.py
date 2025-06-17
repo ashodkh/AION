@@ -81,25 +81,17 @@ class CodecPytorchHubMixin(hub_mixin.PyTorchModelHubMixin):
     """
 
     @staticmethod
-    def _override_config_and_weights_names(modality: type[Modality]):
-        hub_mixin.constants.CONFIG_NAME = (
-            f"codecs/{modality.name}/{ORIGINAL_CONFIG_NAME}"
-        )
-        hub_mixin.constants.SAFETENSORS_SINGLE_FILE = (
-            f"codecs/{modality.name}/{ORIGINAL_SAFETENSORS_SINGLE_FILE}"
-        )
-        hub_mixin.constants.PYTORCH_WEIGHTS_NAME = (
-            f"codecs/{modality.name}/{ORIGINAL_PYTORCH_WEIGHTS_NAME}"
-        )
-
-    @staticmethod
-    def _reset_config_and_weights_names():
-        hub_mixin.constants.PYTORCH_WEIGHTS_NAME = ORIGINAL_PYTORCH_WEIGHTS_NAME
-        hub_mixin.constants.CONFIG_NAME = ORIGINAL_CONFIG_NAME
-        hub_mixin.constants.SAFETENSORS_SINGLE_FILE = ORIGINAL_SAFETENSORS_SINGLE_FILE
-
-    @staticmethod
     def _validate_codec_modality(codec: type[Codec], modality: type[Modality]):
+        """Validate that a codec class is compatible with a modality.
+
+        Args:
+            codec: The codec class to validate
+            modality: The modality type to validate against
+
+        Raises:
+            TypeError: If the codec is not a valid codec class or is incompatible with the modality
+            ValueError: If the modality has no corresponding codec configuration
+        """
         # Import MODALITY_CODEC_MAPPING here to avoid circular import
         from aion.codecs.config import MODALITY_CODEC_MAPPING
 
@@ -137,15 +129,8 @@ class CodecPytorchHubMixin(hub_mixin.PyTorchModelHubMixin):
         Raises:
             ValueError: If the class is not a codec subclass or modality is invalid.
         """
-        # cls._validate_codec_modality(cls, modality)
-        # Overwrite config and pytorch weights names to load codecs stored as submodels
-        # cls._override_config_and_weights_names(modality)
-        # model = super().from_pretrained(
-        #    pretrained_model_name_or_path, *model_args, **kwargs
-        # )
-        # cls._reset_config_and_weights_names()
-        if not issubclass(cls, Codec):
-            raise ValueError("Only codec classes can be loaded using this method.")
+        # Validate codec-modality compatibility
+        cls._validate_codec_modality(cls, modality)
 
         # Validate modality
         _validate_modality(modality)
