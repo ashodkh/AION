@@ -165,56 +165,56 @@ class Scalar(Modality):
 
 
 # Flux measurements in different bands
-class LegacySurveyFluxG(Scalar, Modality):
+class LegacySurveyFluxG(Scalar):
     """G-band flux measurement from Legacy Survey."""
 
     name: ClassVar[str] = "FLUX_G"
     token_key: ClassVar[str] = "tok_flux_g"
 
 
-class LegacySurveyFluxR(Scalar, Modality):
+class LegacySurveyFluxR(Scalar):
     """R-band flux measurement."""
 
     name: ClassVar[str] = "FLUX_R"
     token_key: ClassVar[str] = "tok_flux_r"
 
 
-class LegacySurveyFluxI(Scalar, Modality):
+class LegacySurveyFluxI(Scalar):
     """I-band flux measurement."""
 
     name: ClassVar[str] = "FLUX_I"
     token_key: ClassVar[str] = "tok_flux_i"
 
 
-class LegacySurveyFluxZ(Scalar, Modality):
+class LegacySurveyFluxZ(Scalar):
     """Z-band flux measurement."""
 
     name: ClassVar[str] = "FLUX_Z"
     token_key: ClassVar[str] = "tok_flux_z"
 
 
-class LegacySurveyFluxW1(Scalar, Modality):
+class LegacySurveyFluxW1(Scalar):
     """WISE W1-band flux measurement."""
 
     name: ClassVar[str] = "FLUX_W1"
     token_key: ClassVar[str] = "tok_flux_w1"
 
 
-class LegacySurveyFluxW2(Scalar, Modality):
+class LegacySurveyFluxW2(Scalar):
     """WISE W2-band flux measurement."""
 
     name: ClassVar[str] = "FLUX_W2"
     token_key: ClassVar[str] = "tok_flux_w2"
 
 
-class LegacySurveyFluxW3(Scalar, Modality):
+class LegacySurveyFluxW3(Scalar):
     """WISE W3-band flux measurement."""
 
     name: ClassVar[str] = "FLUX_W3"
     token_key: ClassVar[str] = "tok_flux_w3"
 
 
-class LegacySurveyFluxW4(Scalar, Modality):
+class LegacySurveyFluxW4(Scalar):
     """WISE W4-band flux measurement."""
 
     name: ClassVar[str] = "FLUX_W4"
@@ -222,21 +222,21 @@ class LegacySurveyFluxW4(Scalar, Modality):
 
 
 # Shape parameters
-class LegacySurveyShapeR(Scalar, Modality):
+class LegacySurveyShapeR(Scalar):
     """R-band shape measurement (e.g., half-light radius)."""
 
     name: ClassVar[str] = "SHAPE_R"
     token_key: ClassVar[str] = "tok_shape_r"
 
 
-class LegacySurveyShapeE1(Scalar, Modality):
+class LegacySurveyShapeE1(Scalar):
     """First ellipticity component."""
 
     name: ClassVar[str] = "SHAPE_E1"
     token_key: ClassVar[str] = "tok_shape_e1"
 
 
-class LegacySurveyShapeE2(Scalar, Modality):
+class LegacySurveyShapeE2(Scalar):
     """Second ellipticity component."""
 
     name: ClassVar[str] = "SHAPE_E2"
@@ -244,7 +244,7 @@ class LegacySurveyShapeE2(Scalar, Modality):
 
 
 # Other scalar properties
-class LegacySurveyEBV(Scalar, Modality):
+class LegacySurveyEBV(Scalar):
     """E(B-V) extinction measurement."""
 
     name: ClassVar[str] = "EBV"
@@ -252,7 +252,7 @@ class LegacySurveyEBV(Scalar, Modality):
 
 
 # Spectroscopic redshift
-class Z(Scalar, Modality):
+class Z(Scalar):
     """Spectroscopic redshift measurement."""
 
     name: ClassVar[str] = "Z"
@@ -260,91 +260,91 @@ class Z(Scalar, Modality):
 
 
 # Extinction values from HSC
-class HSCAG(Scalar, Modality):
+class HSCAG(Scalar):
     """HSC a_g extinction."""
 
     name: ClassVar[str] = "a_g"
     token_key: ClassVar[str] = "tok_a_g"
 
 
-class HSCAR(Scalar, Modality):
+class HSCAR(Scalar):
     """HSC a_r extinction."""
 
     name: ClassVar[str] = "a_r"
     token_key: ClassVar[str] = "tok_a_r"
 
 
-class HSCAI(Scalar, Modality):
+class HSCAI(Scalar):
     """HSC a_i extinction."""
 
     name: ClassVar[str] = "a_i"
     token_key: ClassVar[str] = "tok_a_i"
 
 
-class HSCAZ(Scalar, Modality):
+class HSCAZ(Scalar):
     """HSC a_z extinction."""
 
     name: ClassVar[str] = "a_z"
     token_key: ClassVar[str] = "tok_a_z"
 
 
-class HSCAY(Scalar, Modality):
+class HSCAY(Scalar):
     """HSC a_y extinction."""
 
     name: ClassVar[str] = "a_y"
     token_key: ClassVar[str] = "tok_a_y"
 
 
-class HSCMagG(Scalar, Modality):
+class HSCMagG(Scalar):
     """HSC g-band cmodel magnitude."""
 
     name: ClassVar[str] = "g_cmodel_mag"
     token_key: ClassVar[str] = "tok_mag_g"
 
 
-class HSCMagR(Scalar, Modality):
+class HSCMagR(Scalar):
     """HSC r-band cmodel magnitude."""
 
     name: ClassVar[str] = "r_cmodel_mag"
     token_key: ClassVar[str] = "tok_mag_r"
 
 
-class HSCMagI(Scalar, Modality):
+class HSCMagI(Scalar):
     """HSC i-band cmodel magnitude."""
 
     name: ClassVar[str] = "i_cmodel_mag"
     token_key: ClassVar[str] = "tok_mag_i"
 
 
-class HSCMagZ(Scalar, Modality):
+class HSCMagZ(Scalar):
     """HSC z-band cmodel magnitude."""
 
     name: ClassVar[str] = "z_cmodel_mag"
     token_key: ClassVar[str] = "tok_mag_z"
 
 
-class HSCMagY(Scalar, Modality):
+class HSCMagY(Scalar):
     """HSC y-band cmodel magnitude."""
 
     name: ClassVar[str] = "y_cmodel_mag"
     token_key: ClassVar[str] = "tok_mag_y"
 
 
-class HSCShape11(Scalar, Modality):
+class HSCShape11(Scalar):
     """HSC i-band SDSS shape 11 component."""
 
     name: ClassVar[str] = "i_sdssshape_shape11"
     token_key: ClassVar[str] = "tok_shape11"
 
 
-class HSCShape22(Scalar, Modality):
+class HSCShape22(Scalar):
     """HSC i-band SDSS shape 22 component."""
 
     name: ClassVar[str] = "i_sdssshape_shape22"
     token_key: ClassVar[str] = "tok_shape22"
 
 
-class HSCShape12(Scalar, Modality):
+class HSCShape12(Scalar):
     """HSC i-band SDSS shape 12 component."""
 
     name: ClassVar[str] = "i_sdssshape_shape12"
@@ -352,56 +352,56 @@ class HSCShape12(Scalar, Modality):
 
 
 # Gaia modalities
-class GaiaFluxG(Scalar, Modality):
+class GaiaFluxG(Scalar):
     """Gaia G-band mean flux."""
 
     name: ClassVar[str] = "phot_g_mean_flux"
     token_key: ClassVar[str] = "tok_flux_g_gaia"
 
 
-class GaiaFluxBp(Scalar, Modality):
+class GaiaFluxBp(Scalar):
     """Gaia BP-band mean flux."""
 
     name: ClassVar[str] = "phot_bp_mean_flux"
     token_key: ClassVar[str] = "tok_flux_bp_gaia"
 
 
-class GaiaFluxRp(Scalar, Modality):
+class GaiaFluxRp(Scalar):
     """Gaia RP-band mean flux."""
 
     name: ClassVar[str] = "phot_rp_mean_flux"
     token_key: ClassVar[str] = "tok_flux_rp_gaia"
 
 
-class GaiaParallax(Scalar, Modality):
+class GaiaParallax(Scalar):
     """Gaia parallax measurement."""
 
     name: ClassVar[str] = "parallax"
     token_key: ClassVar[str] = "tok_parallax"
 
 
-class Ra(Scalar, Modality):
+class Ra(Scalar):
     """Right ascension coordinate."""
 
     name: ClassVar[str] = "ra"
     token_key: ClassVar[str] = "tok_ra"
 
 
-class Dec(Scalar, Modality):
+class Dec(Scalar):
     """Declination coordinate."""
 
     name: ClassVar[str] = "dec"
     token_key: ClassVar[str] = "tok_dec"
 
 
-class GaiaXpBp(Scalar, Modality):
+class GaiaXpBp(Scalar):
     """Gaia BP spectral coefficients."""
 
     name: ClassVar[str] = "bp_coefficients"
     token_key: ClassVar[str] = "tok_xp_bp"
 
 
-class GaiaXpRp(Scalar, Modality):
+class GaiaXpRp(Scalar):
     """Gaia RP spectral coefficients."""
 
     name: ClassVar[str] = "rp_coefficients"
