@@ -139,11 +139,11 @@ class CodecPytorchHubMixin(hub_mixin.PyTorchModelHubMixin):
         """
         # cls._validate_codec_modality(cls, modality)
         # Overwrite config and pytorch weights names to load codecs stored as submodels
-        #cls._override_config_and_weights_names(modality)
-        #model = super().from_pretrained(
+        # cls._override_config_and_weights_names(modality)
+        # model = super().from_pretrained(
         #    pretrained_model_name_or_path, *model_args, **kwargs
-        #)
-        #cls._reset_config_and_weights_names()
+        # )
+        # cls._reset_config_and_weights_names()
         if not issubclass(cls, Codec):
             raise ValueError("Only codec classes can be loaded using this method.")
 
