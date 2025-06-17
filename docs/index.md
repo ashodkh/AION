@@ -36,8 +36,8 @@ from aion.modalities import (LegacySurveyImage, LegacySurveyFluxG,
 LegacySurveyFluxR, LegacySurveyFluxI, LegacySurveyFluxZ)
 
 # 1) Load a pre-trained checkpoint (300 M parameters)
-model = AION.from_pretrained('polymathic-ai/aion-base')
-codec = CodecManager() # Manages codecs for each modality
+model = AION.from_pretrained('polymathic-ai/aion-base').to('cuda').eval()
+codec_manager = CodecManager(device='cuda') # Manages codecs for each modality
 
 # 2) Prepare demo inputs (96×96 g,r,i,z cut-out and photometry)
 # Create image modality
@@ -53,15 +53,18 @@ i = LegacySurveyFluxI(value=data["legacysurvey_FLUX_I"])
 z = LegacySurveyFluxZ(value=data["legacysurvey_FLUX_Z"])
 
 # Encode input modalities into tokens
-tokens = codec.encode(image, g, r, i, z)
+tokens = codec_manager.encode(image, g, r, i, z)
 
 # 3) Generate a redshift distribution from these set of inputs
-redshift_logits = model(tokens,
+predictions = model(
+    tokens,
     target_mask={"tok_z": torch.zeros(batch_size, 1)},
+    num_encoder_tokens=600
 )
+redshift_logits = predictions["tok_z"]  # Shape: [batch, sequence, vocab_size]
 
 # 4) Extract joint embeddings for downstream use
-embeddings = model.encode(tokens)
+embeddings = model.encode(tokens, num_encoder_tokens=600)  # Shape: [batch, seq_len, hidden_dim]
 ```
 
 ## 📚 Documentation Overview

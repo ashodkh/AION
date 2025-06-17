@@ -222,9 +222,9 @@ AION-1 comes in three sizes, each using the same architecture with different dim
 
 | Model | Parameters | Encoder Layers | Decoder Layers | Hidden Dim | Attention Heads |
 |-------|------------|----------------|----------------|------------|-----------------|
-| AION-1-B (Base) | 300M | 12 | 12 | 768 | 12 |
-| AION-1-L (Large) | 800M | 24 | 24 | 1024 | 16 |
-| AION-1-XL (XLarge) | 3.1B | 24 | 24 | 2048 | 32 |
+| AION-Base | ~300M | 12 | 12 | 768 | 12 |
+
+> **Note**: Additional model sizes may be released in the future. Current model ID: `polymathic-ai/aion-base`
 
 All models use:
 - SwiGLU activation functions

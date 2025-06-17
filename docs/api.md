@@ -1,691 +1,363 @@
 # API Reference
 
-This comprehensive API reference covers all major components of AION-1, including modalities, codecs, models, and utilities.
+This API reference covers the core components you'll actually use with AION-1, based on the working implementation.
 
 ## Core Model
 
 ### `aion.AION`
 
-The main AION model class that provides high-level interfaces for multimodal astronomical analysis.
+The main AION model class that provides multimodal astronomical analysis.
 
 ```python
-class AION(FourM):
+from aion import AION
+
+class AION(FM):
     """
     AION-1 multimodal astronomical foundation model.
 
-    Inherits from FourM architecture and adds astronomical-specific
-    functionality for processing 39 different data modalities.
+    Inherits from FM (4M) architecture and adds astronomical-specific
+    functionality for processing multiple data modalities.
     """
 
     @classmethod
-    def from_pretrained(
-        cls,
-        model_name: str,
-        device: str = 'cuda',
-        torch_dtype: torch.dtype = torch.float32,
-        **kwargs
-    ) -> 'AION':
+    def from_pretrained(cls, model_name: str, **kwargs) -> 'AION':
         """
-        Load a pre-trained AION model.
+        Load a pre-trained AION model from HuggingFace Hub.
 
         Args:
             model_name: HuggingFace model identifier
-                - 'polymathic-ai/aion-tiny': 300M parameter model
-                - 'polymathic-ai/aion-base': 800M parameter model
-                - 'polymathic-ai/aion-large': 3.1B parameter model
-            device: Device to load model on ('cuda', 'cpu', 'mps')
-            torch_dtype: Data type for model weights
-            **kwargs: Additional arguments passed to model constructor
+                - 'polymathic-ai/aion-base': 300M parameter model
 
         Returns:
             AION model instance
+
+        Example:
+            >>> model = AION.from_pretrained('polymathic-ai/aion-base')
+            >>> model = model.to('cuda').eval()
         """
 
-    def generate(
+    def forward(
         self,
-        inputs: Dict[str, Modality],
-        targets: List[str],
-        num_generations: int = 1,
-        temperature: float = 1.0,
-        top_k: Optional[int] = None,
-        top_p: Optional[float] = None
-    ) -> Dict[str, Modality]:
+        input_tokens: Dict[str, torch.Tensor],
+        target_mask: Optional[Dict[str, torch.Tensor]] = None,
+        num_encoder_tokens: int = 600,
+        **kwargs
+    ) -> Dict[str, torch.Tensor]:
         """
-        Generate target modalities from input observations.
-
-        Note:
-            ``targets`` must be chosen from the list returned by
-            ``AION.supported_targets`` (essentially the 39 modality names
-            listed in the architecture documentation).  Supplying an
-            unsupported string will raise ``ValueError``.
+        Forward pass through the model.
 
         Args:
-            inputs: Dictionary mapping modality names to data
-            targets: List of modality names to generate
-            num_generations: Number of samples to generate
-            temperature: Sampling temperature (higher = more diverse)
-            top_k: Top-k sampling parameter
-            top_p: Nucleus sampling parameter
+            input_tokens: Dictionary mapping modality token keys to token tensors
+            target_mask: Dictionary specifying which tokens to predict
+                Format: {"tok_z": torch.zeros(batch_size, num_target_tokens)}
+            num_encoder_tokens: Number of tokens to use in encoder
 
         Returns:
-            Dictionary mapping target names to generated modalities
+            Dictionary mapping target keys to prediction logits
+
+        Example:
+            >>> predictions = model(
+            ...     tokens,
+            ...     target_mask={"tok_z": torch.zeros(32, 1)},
+            ...     num_encoder_tokens=600
+            ... )
+            >>> redshift_probs = torch.softmax(predictions["tok_z"], dim=-1)
         """
 
     def encode(
         self,
-        inputs: Dict[str, torch.Tensor]
+        input_tokens: Dict[str, torch.Tensor],
+        num_encoder_tokens: int = 600
     ) -> torch.Tensor:
         """
-        Encode input tokens to learned representations.
+        Extract embeddings from input tokens.
 
         Args:
-            inputs: Tokenized inputs
+            input_tokens: Dictionary of tokenized modality data
+            num_encoder_tokens: Number of tokens for encoder processing
 
         Returns:
-            Encoder hidden states [batch, seq_len, hidden_dim]
+            Encoder embeddings with shape [batch, seq_len, hidden_dim]
+
+        Example:
+            >>> embeddings = model.encode(tokens, num_encoder_tokens=600)
+            >>> # Use embeddings for downstream tasks
+            >>> pooled = embeddings.mean(dim=1)  # [batch, hidden_dim]
+        """
+```
+
+## Codec Management
+
+### `aion.codecs.CodecManager`
+
+Manages automatic loading and application of modality-specific codecs.
+
+```python
+from aion.codecs import CodecManager
+
+class CodecManager:
+    """
+    Central manager for encoding/decoding between modalities and tokens.
+    """
+
+    def __init__(self, device: str = 'cuda'):
+        """
+        Initialize codec manager.
+
+        Args:
+            device: Device to load codecs on ('cuda', 'cpu')
+
+        Example:
+            >>> codec_manager = CodecManager(device='cuda')
         """
 
-    def tokenize(
+    def encode(self, *modalities) -> Dict[str, torch.Tensor]:
+        """
+        Encode modalities into discrete tokens.
+
+        Args:
+            *modalities: Variable number of modality objects
+
+        Returns:
+            Dictionary mapping token keys to token tensors
+
+        Example:
+            >>> tokens = codec_manager.encode(image, spectrum, flux_g)
+            >>> # Returns: {"tok_image": tensor(...), "tok_spectrum_sdss": tensor(...), "tok_flux_g": tensor(...)}
+        """
+
+    def decode(
         self,
-        modalities: Dict[str, Modality]
-    ) -> Dict[str, torch.Tensor]:
+        tokens: Dict[str, torch.Tensor],
+        modality_class: type,
+        **metadata
+    ):
         """
-        Convert modalities to discrete tokens using codecs.
+        Decode tokens back to modality objects.
 
         Args:
-            modalities: Dictionary of modality data
+            tokens: Dictionary of token tensors
+            modality_class: Class of modality to decode (e.g., LegacySurveyImage)
+            **metadata: Additional metadata required for reconstruction
 
         Returns:
-            Dictionary of tokenized tensors
+            Reconstructed modality object
+
+        Example:
+            >>> reconstructed = codec_manager.decode(
+            ...     tokens,
+            ...     LegacySurveyImage,
+            ...     bands=["DES-G", "DES-R", "DES-I", "DES-Z"]
+            ... )
         """
 ```
 
 ## Modalities
 
-AION-1 supports 39 different astronomical data modalities. Each modality is represented by a Pydantic model ensuring type safety and validation.
+AION-1 uses a typed modality system to ensure data compatibility and provenance tracking.
+
+### Base Classes
+
+```python
+from aion.modalities import BaseModality
+
+class BaseModality:
+    """Base class for all astronomical modalities."""
+
+    @property
+    def token_key(self) -> str:
+        """Unique identifier for this modality type in the model."""
+```
 
 ### Image Modalities
 
-#### `aion.modalities.Image`
-
 ```python
-class Image(Modality):
+from aion.modalities import LegacySurveyImage, HSCImage
+
+class LegacySurveyImage(BaseModality):
     """
-    Multi-band astronomical image.
+    Legacy Survey multi-band image.
 
     Attributes:
-        flux: Image data array [bands, height, width]
-        bands: List of band identifiers (e.g., ['HSC-G', 'HSC-R'])
-        ivar: Optional inverse variance array for weighting
-        mask: Optional boolean mask array
+        flux: Image tensor with shape [batch, 4, height, width] for g,r,i,z bands
+        bands: List of band identifiers (e.g., ['DES-G', 'DES-R', 'DES-I', 'DES-Z'])
     """
 
-    flux: np.ndarray
+    flux: torch.Tensor
     bands: List[str]
-    ivar: Optional[np.ndarray] = None
-    mask: Optional[np.ndarray] = None
 
-    @classmethod
-    def batch(cls, images: List['Image']) -> 'Image':
-        """Batch multiple images together."""
+    @property
+    def token_key(self) -> str:
+        return "tok_image"
 
-    def crop(self, size: int = 96) -> 'Image':
-        """Center crop image to specified size."""
+class HSCImage(BaseModality):
+    """
+    HSC multi-band image.
+
+    Attributes:
+        flux: Image tensor with shape [batch, 5, height, width] for g,r,i,z,y bands
+        bands: List of band identifiers
+    """
+
+    flux: torch.Tensor
+    bands: List[str]
+
+    @property
+    def token_key(self) -> str:
+        return "tok_image"
 ```
 
 ### Spectrum Modalities
 
-#### `aion.modalities.Spectrum`
-
 ```python
-class Spectrum(Modality):
+from aion.modalities import DESISpectrum, SDSSSpectrum
+
+class DESISpectrum(BaseModality):
     """
-    Astronomical spectrum.
+    DESI spectroscopic observation.
 
     Attributes:
-        wavelength: Wavelength array in Angstroms
         flux: Flux density array
-        ivar: Optional inverse variance
-        survey: Source survey identifier
+        ivar: Inverse variance array
+        mask: Boolean mask array
+        wavelength: Wavelength array in Angstroms
     """
 
-    wavelength: np.ndarray
-    flux: np.ndarray
-    ivar: Optional[np.ndarray] = None
-    survey: Optional[str] = None
+    flux: torch.Tensor
+    ivar: torch.Tensor
+    mask: torch.Tensor
+    wavelength: torch.Tensor
 
-    def resample(
-        self,
-        new_wavelength: np.ndarray
-    ) -> 'Spectrum':
-        """Resample spectrum to new wavelength grid."""
+    @property
+    def token_key(self) -> str:
+        return "tok_spectrum_desi"
 
-    def normalize(self) -> 'Spectrum':
-        """Apply median normalization."""
+class SDSSSpectrum(BaseModality):
+    """SDSS spectroscopic observation."""
+
+    @property
+    def token_key(self) -> str:
+        return "tok_spectrum_sdss"
 ```
 
 ### Scalar Modalities
 
-AION-1 includes numerous scalar modalities for photometry, shapes, and physical parameters:
-
-#### Photometric Fluxes
-
 ```python
-class FluxG(ScalarModality):
-    """g-band flux measurement."""
-    value: np.ndarray
-    error: Optional[np.ndarray] = None
+from aion.modalities import (
+    LegacySurveyFluxG, LegacySurveyFluxR, LegacySurveyFluxI, LegacySurveyFluxZ,
+    Z, GaiaParallax
+)
 
-class FluxR(ScalarModality):
-    """r-band flux measurement."""
-    value: np.ndarray
-    error: Optional[np.ndarray] = None
+class LegacySurveyFluxG(BaseModality):
+    """Legacy Survey g-band flux measurement."""
 
-class FluxI(ScalarModality):
-    """i-band flux measurement."""
-    value: np.ndarray
-    error: Optional[np.ndarray] = None
+    value: torch.Tensor
 
-class FluxZ(ScalarModality):
-    """z-band flux measurement."""
-    value: np.ndarray
-    error: Optional[np.ndarray] = None
+    @property
+    def token_key(self) -> str:
+        return "tok_flux_g"
+
+class Z(BaseModality):
+    """Spectroscopic redshift."""
+
+    value: torch.Tensor
+
+    @property
+    def token_key(self) -> str:
+        return "tok_z"
 ```
 
-#### Shape Parameters
+## Complete Usage Example
 
-```python
-class E1(ScalarModality):
-    """First ellipticity component."""
-    value: np.ndarray
-
-class E2(ScalarModality):
-    """Second ellipticity component."""
-    value: np.ndarray
-
-class RadiusCARP(ScalarModality):
-    """CARP radius measurement."""
-    value: np.ndarray
-```
-
-#### Physical Properties
-
-```python
-class Redshift(ScalarModality):
-    """Spectroscopic or photometric redshift."""
-    value: np.ndarray
-    error: Optional[np.ndarray] = None
-
-class ExtinctionV(ScalarModality):
-    """V-band extinction."""
-    value: np.ndarray
-
-class Parallax(ScalarModality):
-    """Parallax measurement in mas."""
-    value: np.ndarray
-    error: Optional[np.ndarray] = None
-```
-
-### Catalog Modalities
-
-#### `aion.modalities.Catalog`
-
-```python
-class Catalog(Modality):
-    """
-    Astronomical object catalog.
-
-    Attributes:
-        entries: List of catalog objects
-        max_objects: Maximum number of objects to process
-    """
-
-    entries: List[CatalogEntry]
-    max_objects: int = 100
-
-    def sort_by_distance(self) -> 'Catalog':
-        """Sort entries by distance from center."""
-
-    def filter_bright(self, magnitude_limit: float) -> 'Catalog':
-        """Filter to objects brighter than limit."""
-```
-
-## Codecs (Tokenizers)
-
-Codecs convert between modalities and discrete tokens. Each modality type has a specialized codec.
-
-### Base Codec Interface
-
-#### `aion.codecs.base.Codec`
-
-```python
-class Codec(ABC):
-    """
-    Abstract base class for modality codecs.
-    """
-
-    @abstractmethod
-    def encode(self, modality: Modality) -> torch.Tensor:
-        """Encode modality to discrete tokens."""
-
-    @abstractmethod
-    def decode(self, tokens: torch.Tensor) -> Modality:
-        """Decode tokens back to modality."""
-
-    @classmethod
-    def from_pretrained(cls, path: str) -> 'Codec':
-        """Load pre-trained codec."""
-
-    def save_pretrained(self, path: str):
-        """Save codec weights and configuration."""
-```
-
-### Image Codec
-
-#### `aion.codecs.ImageCodec`
-
-```python
-class ImageCodec(Codec):
-    """
-    Image tokenizer using MagVit architecture.
-
-    Supports multi-survey images with different band counts
-    through a unified channel embedding scheme.
-    """
-
-    def __init__(
-        self,
-        hidden_dim: int = 512,
-        n_embed: int = 10000,
-        compression_levels: int = 2,
-        quantizer: str = 'fsq'
-    ):
-        """
-        Initialize image codec.
-
-        Args:
-            hidden_dim: Hidden dimension size
-            n_embed: Codebook size
-            compression_levels: Spatial compression factor
-            quantizer: Quantization method ('fsq' or 'vq')
-        """
-
-    def preprocess(
-        self,
-        image: Image,
-        crop_size: int = 96
-    ) -> torch.Tensor:
-        """Apply survey-specific preprocessing."""
-
-    def get_latent_shape(
-        self,
-        image_shape: Tuple[int, ...]
-    ) -> Tuple[int, ...]:
-        """Get shape of latent representation."""
-```
-
-### Spectrum Codec
-
-#### `aion.codecs.SpectrumCodec`
-
-```python
-class SpectrumCodec(Codec):
-    """
-    Spectrum tokenizer using ConvNeXt V2 architecture.
-
-    Uses a shared latent wavelength grid to handle spectra
-    from different instruments.
-    """
-
-    def __init__(
-        self,
-        latent_wavelength: np.ndarray,
-        hidden_dims: List[int] = [96, 192, 384, 768],
-        n_embed: int = 1024,
-        quantizer: str = 'lfq'
-    ):
-        """
-        Initialize spectrum codec.
-
-        Args:
-            latent_wavelength: Target wavelength grid
-            hidden_dims: ConvNeXt stage dimensions
-            n_embed: Codebook size
-            quantizer: Quantization method
-        """
-
-    def to_latent_grid(
-        self,
-        spectrum: Spectrum
-    ) -> torch.Tensor:
-        """Interpolate spectrum to latent wavelength grid."""
-```
-
-### Scalar Codec
-
-#### `aion.codecs.ScalarCodec`
-
-```python
-class ScalarCodec(Codec):
-    """
-    Tokenizer for scalar quantities using adaptive quantization.
-    """
-
-    def __init__(
-        self,
-        quantizer_type: str = 'reservoir',
-        n_bins: int = 256
-    ):
-        """
-        Initialize scalar codec.
-
-        Args:
-            quantizer_type: Type of quantizer
-                - 'linear': Uniform bins
-                - 'log': Logarithmic bins
-                - 'reservoir': Learned adaptive bins
-                - 'compressed': Transform then quantize
-            n_bins: Number of quantization levels
-        """
-
-    def fit(self, values: np.ndarray):
-        """Fit quantizer to data distribution."""
-```
-
-## Quantizers
-
-Quantization modules that convert continuous values to discrete tokens.
-
-### `aion.codecs.quantizers.FSQ`
-
-```python
-class FiniteScalarQuantization(nn.Module):
-    """
-    Finite Scalar Quantization from MagVit.
-
-    Factorizes codebook into multiple small codebooks for
-    better gradient flow and training stability.
-    """
-
-    def __init__(
-        self,
-        levels: List[int] = [8, 5, 5, 5, 5],
-        eps: float = 1e-3
-    ):
-        """
-        Args:
-            levels: Number of levels per dimension
-            eps: Small constant for numerical stability
-        """
-```
-
-### `aion.codecs.quantizers.LFQ`
-
-```python
-class LookupFreeQuantization(nn.Module):
-    """
-    Lookup-Free Quantization using entropy regularization.
-
-    Achieves quantization without explicit codebook lookup,
-    improving training efficiency.
-    """
-
-    def __init__(
-        self,
-        dim: int,
-        codebook_size: int,
-        entropy_weight: float = 0.1
-    ):
-        """
-        Args:
-            dim: Embedding dimension
-            codebook_size: Target vocabulary size
-            entropy_weight: Entropy regularization weight
-        """
-```
-
-## Preprocessing
-
-Survey-specific preprocessing utilities.
-
-### `aion.codecs.preprocessing.ImagePreprocessor`
-
-```python
-class ImagePreprocessor:
-    """
-    Survey-specific image preprocessing.
-    """
-
-    def __init__(self, survey: str):
-        """
-        Initialize for specific survey.
-
-        Args:
-            survey: Survey name ('HSC', 'DES', 'SDSS', etc.)
-        """
-
-    def __call__(self, image: Image) -> torch.Tensor:
-        """Apply preprocessing pipeline."""
-
-    def get_rescaling_params(self) -> Dict[str, float]:
-        """Get survey-specific rescaling parameters."""
-```
-
-### `aion.codecs.preprocessing.SpectrumPreprocessor`
-
-```python
-class SpectrumPreprocessor:
-    """
-    Spectrum normalization and preprocessing.
-    """
-
-    def normalize_median(
-        self,
-        spectrum: Spectrum
-    ) -> Spectrum:
-        """Apply median normalization."""
-
-    def mask_skylines(
-        self,
-        spectrum: Spectrum
-    ) -> Spectrum:
-        """Mask common sky emission lines."""
-```
-
-## Model Components
-
-### `aion.fourm.FourM`
-
-```python
-class FourM(nn.Module):
-    """
-    Base multimodal transformer architecture.
-
-    Implements the encoder-decoder architecture with
-    modality-specific embeddings and flexible attention.
-    """
-
-    def __init__(
-        self,
-        encoder_depth: int = 12,
-        decoder_depth: int = 12,
-        dim: int = 768,
-        num_heads: int = 12,
-        mlp_ratio: float = 4.0,
-        use_bias: bool = False
-    ):
-        """Initialize FourM architecture."""
-```
-
-### `aion.fourm.encoder_embeddings`
-
-```python
-class ModalityEmbedding(nn.Module):
-    """
-    Learnable embeddings for each modality type.
-
-    Provides both modality identification and survey
-    provenance information.
-    """
-
-    def __init__(
-        self,
-        num_modalities: int,
-        num_surveys: int,
-        embed_dim: int
-    ):
-        """Initialize modality embeddings."""
-```
-
-## Utilities
-
-### `aion.model_utils`
-
-```python
-def load_codec(modality: str, device: str = 'cuda') -> Codec:
-    """Load pre-trained codec for modality."""
-
-def create_model_config(
-    model_size: str = 'base'
-) -> Dict[str, Any]:
-    """Get configuration for model size."""
-
-def count_parameters(model: nn.Module) -> int:
-    """Count trainable parameters in model."""
-```
-
-### `aion.generation_utils`
-
-```python
-def sample_with_temperature(
-    logits: torch.Tensor,
-    temperature: float = 1.0,
-    top_k: Optional[int] = None,
-    top_p: Optional[float] = None
-) -> torch.Tensor:
-    """
-    Sample from logits with temperature scaling.
-
-    Args:
-        logits: Model output logits
-        temperature: Sampling temperature
-        top_k: Top-k filtering
-        top_p: Nucleus sampling threshold
-
-    Returns:
-        Sampled token indices
-    """
-
-def generate_with_caching(
-    model: AION,
-    inputs: Dict[str, torch.Tensor],
-    max_length: int,
-    use_cache: bool = True
-) -> torch.Tensor:
-    """Generate tokens with KV caching for efficiency."""
-```
-
-## Data Loading
-
-### `aion.data.AstronomicalDataset`
-
-```python
-class AstronomicalDataset(Dataset):
-    """
-    PyTorch dataset for astronomical observations.
-    """
-
-    def __init__(
-        self,
-        data_paths: List[str],
-        modalities: List[str],
-        transform: Optional[Callable] = None
-    ):
-        """
-        Initialize dataset.
-
-        Args:
-            data_paths: Paths to data files
-            modalities: List of modalities to load
-            transform: Optional data transformation
-        """
-
-    def __getitem__(self, idx: int) -> Dict[str, Modality]:
-        """Get single observation."""
-```
-
-## Example Usage
-
-### Complete Pipeline
+Here's a comprehensive example showing the full workflow:
 
 ```python
 import torch
 from aion import AION
-from aion.modalities import Image, Spectrum
-from aion.codecs import ImageCodec, SpectrumCodec
+from aion.codecs import CodecManager
+from aion.modalities import (
+    LegacySurveyImage, DESISpectrum,
+    LegacySurveyFluxG, LegacySurveyFluxR, LegacySurveyFluxI, LegacySurveyFluxZ
+)
 
-# Load model and codecs
-model = AION.from_pretrained('polymathic-ai/aion-base')
-image_codec = ImageCodec.from_pretrained('polymathic-ai/aion-image-codec')
-spectrum_codec = SpectrumCodec.from_pretrained('polymathic-ai/aion-spectrum-codec')
+# 1. Load model and codec manager
+model = AION.from_pretrained('polymathic-ai/aion-base').to('cuda').eval()
+codec_manager = CodecManager(device='cuda')
 
-# Load data
-image = Image(flux=galaxy_flux, bands=['g', 'r', 'i', 'z', 'y'])
-spectrum = Spectrum(wavelength=wavelength, flux=flux)
+# 2. Prepare data
+image = LegacySurveyImage(
+    flux=torch.tensor(image_data, dtype=torch.float32),
+    bands=['DES-G', 'DES-R', 'DES-I', 'DES-Z']
+)
 
-# Tokenize
-tokens = {
-    'image': image_codec.encode(image),
-    'spectrum': spectrum_codec.encode(spectrum)
-}
+spectrum = DESISpectrum(
+    flux=torch.tensor(flux_data),
+    ivar=torch.tensor(ivar_data),
+    mask=torch.tensor(mask_data, dtype=torch.bool),
+    wavelength=torch.tensor(wavelength_data)
+)
 
-# Encode to representations
+flux_g = LegacySurveyFluxG(value=torch.tensor([flux_g_value]))
+
+# 3. Encode to tokens
+tokens = codec_manager.encode(image, spectrum, flux_g)
+
+# 4. Extract embeddings for downstream tasks
 with torch.no_grad():
-    representations = model.encode(tokens)
+    embeddings = model.encode(tokens, num_encoder_tokens=600)
+    pooled_embeddings = embeddings.mean(dim=1)  # [batch, hidden_dim]
 
-# Generate missing modalities
-results = model.generate(
-    inputs={'image': image},
-    targets=['spectrum', 'redshift']
+# 5. Predict redshift
+with torch.no_grad():
+    predictions = model(
+        tokens,
+        target_mask={"tok_z": torch.zeros(1, 1)},
+        num_encoder_tokens=600
+    )
+    redshift_probs = torch.softmax(predictions["tok_z"][0], dim=-1)
+
+# 6. Decode tokens back to modalities
+reconstructed_image = codec_manager.decode(
+    tokens,
+    LegacySurveyImage,
+    bands=['DES-G', 'DES-R', 'DES-I', 'DES-Z']
 )
-
-# Decode results
-generated_spectrum = spectrum_codec.decode(results['spectrum'])
-print(f"Predicted redshift: {results['redshift'].value[0]:.3f}")
 ```
 
-## Error Handling
+## Model Variants
 
-All AION components include comprehensive error handling:
+Currently available pre-trained models:
 
+| Model | Parameters | HuggingFace ID |
+|-------|------------|----------------|
+| AION-Base | 300M | `polymathic-ai/aion-base` |
+
+More model variants will be added as they become available.
+
+## Common Patterns
+
+### Similarity Search
 ```python
-from aion.exceptions import (
-    ModalityError,      # Invalid modality data
-    CodecError,         # Tokenization failures
-    ModelError,         # Model inference errors
-    DataError          # Data loading issues
-)
+def compute_similarities(query_tokens, database_tokens, model):
+    """Compute embedding similarities between query and database."""
+    with torch.no_grad():
+        query_emb = model.encode(query_tokens).mean(dim=1)
+        db_embs = model.encode(database_tokens).mean(dim=1)
 
-try:
-    result = model.generate(inputs, targets)
-except ModalityError as e:
-    print(f"Invalid modality: {e}")
-except CodecError as e:
-    print(f"Tokenization failed: {e}")
+    from sklearn.metrics.pairwise import cosine_similarity
+    return cosine_similarity(query_emb.cpu(), db_embs.cpu())
 ```
 
-## Performance Tips
+### Batch Processing
+```python
+def process_batch(batch_data, model, codec_manager):
+    """Process a batch of astronomical objects."""
+    batch_tokens = codec_manager.encode(*batch_data)
 
-1. **Batch Processing**: Always process multiple objects together when possible
-2. **Mixed Precision**: Use `torch.cuda.amp` for faster inference
-3. **Token Caching**: Reuse encoder outputs when generating multiple targets
-4. **Device Placement**: Use `.to(device)` consistently for all tensors
+    with torch.no_grad():
+        embeddings = model.encode(batch_tokens, num_encoder_tokens=600)
 
-For more details, see the [Usage Guide](usage.md) and [Architecture](architecture.md) documentation.
-
-```{eval-rst}
-.. automodule:: aion
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    return embeddings.mean(dim=1)  # Pooled embeddings
 ```
+
+For more examples, see the [Usage Guide](usage.md) and [Tutorial Notebook](https://colab.research.google.com/github/PolymathicAI/AION/blob/main/notebooks/Tutorial.ipynb).

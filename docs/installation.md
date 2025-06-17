@@ -1,89 +1,111 @@
 # Installation Guide
 
-This comprehensive guide will walk you through installing AION-1 and setting up your environment for astronomical multimodal analysis.
+Quick and straightforward installation guide for AION-1.
 
 ## System Requirements
 
 ### Hardware Requirements
 
-AION-1 is designed to run efficiently on various hardware configurations:
+**Minimum (CPU only)**:
+- 16 GB RAM
+- 20 GB free storage
 
-- **Minimum Requirements**:
-  - CPU: 4+ cores (Intel/AMD x86_64 or Apple Silicon)
-  - RAM: 16 GB
-  - GPU: NVIDIA GPU with 8GB+ VRAM (optional but recommended)
-  - Storage: 50 GB free space for models and data
+**Recommended (GPU)**:
+- NVIDIA GPU with 8GB+ VRAM
+- 32 GB RAM
+- 50 GB free storage
 
-- **Recommended Requirements**:
-  - CPU: 8+ cores
-  - RAM: 32 GB or more
-  - GPU: NVIDIA GPU with 24GB+ VRAM (e.g., RTX 3090, A5000, or better)
-  - Storage: 100 GB+ free space
-
-- **For Large-Scale Processing**:
-  - Multiple GPUs with NVLink
-  - 64GB+ RAM
-  - Fast SSD storage for data loading
+**For Large-Scale Processing**:
+- NVIDIA GPU with 24GB+ VRAM (e.g., RTX 4090, A5000+)
+- 64GB+ RAM
 
 ### Software Requirements
 
-- Python 3.10 or later
-- CUDA 11.8+ (for GPU support)
-- Operating System: Linux, macOS, or Windows
+- Python 3.10+
+- CUDA 11.8+ (for GPU acceleration)
+- Linux, macOS, or Windows
 
-## Installation Methods
+## Installation
 
-### 1. Quick Install via PyPI
-
-The simplest way to install AION-1 is through PyPI:
+### Quick Install (Recommended)
 
 ```bash
-pip install aion
-```
-
-This installs the core AION package with minimal dependencies.
-
-### 2. Full Installation with PyTorch
-
-For GPU support and optimal performance:
-
-```bash
-# Install PyTorch first (adjust for your CUDA version)
+# Install PyTorch with CUDA support (adjust CUDA version as needed)
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
 
-# Then install AION
+# Install AION
 pip install aion
 ```
 
-### 3. Development Installation
-
-For contributors or those who want the latest features:
+### Alternative: CPU-only Installation
 
 ```bash
-# Clone the repository
+# Install CPU-only PyTorch
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+
+# Install AION
+pip install aion
+```
+
+### Development Installation
+
+```bash
 git clone https://github.com/polymathic-ai/aion.git
 cd aion
-
-# Create a virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install in development mode
-pip install -e ".[dev]"
+pip install -e ".[torch,dev]"
 ```
 
-## Setting Up Your Environment
+## Verification
 
-### 1. Virtual Environment Setup
+Test your installation:
 
-We strongly recommend using a virtual environment:
+```python
+import torch
+from aion import AION
+from aion.codecs import CodecManager
 
+print(f"PyTorch version: {torch.__version__}")
+print(f"CUDA available: {torch.cuda.is_available()}")
+
+# Test model loading (requires internet connection)
+try:
+    model = AION.from_pretrained('polymathic-ai/aion-base')
+    print("✓ AION model loaded successfully")
+except Exception as e:
+    print(f"✗ Model loading failed: {e}")
+
+# Test codec manager
+try:
+    codec_manager = CodecManager(device='cuda' if torch.cuda.is_available() else 'cpu')
+    print("✓ CodecManager initialized successfully")
+except Exception as e:
+    print(f"✗ CodecManager failed: {e}")
+```
+
+## Troubleshooting
+
+### Common Issues
+
+**CUDA out of memory**:
 ```bash
-# Using venv
-python -m venv aion-env
-source aion-env/bin/activate  # On Windows: aion-env\Scripts\activate
-
-# Using conda
-conda create -n aion python=3.10
-conda activate aion
+# Use smaller model or CPU
+model = AION.from_pretrained('polymathic-ai/aion-base').to('cpu')
 ```
+
+**HuggingFace connection issues**:
+```bash
+# Set up HuggingFace cache directory
+export HF_HOME=/path/to/cache
+```
+
+**Import errors**:
+```bash
+# Reinstall with fresh environment
+pip uninstall aion torch
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+pip install aion
+```
+
+## Next Steps
+
+Once installed, try the [Tutorial Notebook](https://colab.research.google.com/github/PolymathicAI/AION/blob/main/notebooks/Tutorial.ipynb) or check the [Usage Guide](usage.md) for examples.
