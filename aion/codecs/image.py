@@ -1,5 +1,4 @@
 import torch
-from huggingface_hub import PyTorchModelHubMixin
 from jaxtyping import Float
 from torch import Tensor
 from typing import Type, Optional, List
@@ -16,6 +15,7 @@ from aion.codecs.preprocessing.image import (
     Clamp,
 )
 from aion.codecs.preprocessing.band_to_index import BAND_TO_INDEX
+from aion.codecs.utils import CodecPytorchHubMixin
 
 
 class AutoencoderImageCodec(Codec):
@@ -165,7 +165,7 @@ class AutoencoderImageCodec(Codec):
         return super().decode(z, bands=bands)
 
 
-class ImageCodec(AutoencoderImageCodec, PyTorchModelHubMixin):
+class ImageCodec(AutoencoderImageCodec, CodecPytorchHubMixin):
     def __init__(
         self,
         quantizer_levels: List[int],

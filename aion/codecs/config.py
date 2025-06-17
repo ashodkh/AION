@@ -75,132 +75,45 @@ class CodecHFConfig:
     repo_id: str
 
 
-CODEC_CONFIG = {
-    Image: CodecHFConfig(
-        codec_class=ImageCodec, repo_id="polymathic-ai/aion-image-codec"
-    ),
-    Spectrum: CodecHFConfig(
-        codec_class=SpectrumCodec, repo_id="polymathic-ai/aion-spectrum-codec"
-    ),
-    LegacySurveyCatalog: CodecHFConfig(
-        codec_class=CatalogCodec, repo_id="polymathic-ai/aion-catalog-codec"
-    ),
-    LegacySurveySegmentationMap: CodecHFConfig(
-        codec_class=ScalarFieldCodec, repo_id="polymathic-ai/aion-scalar-field-codec"
-    ),
-    # Scalar modalities
-    # LogScalarCodec
-    LegacySurveyFluxG: CodecHFConfig(
-        codec_class=LogScalarCodec, repo_id="polymathic-ai/aion-scalar-flux-g-codec"
-    ),
-    LegacySurveyFluxR: CodecHFConfig(
-        codec_class=LogScalarCodec, repo_id="polymathic-ai/aion-scalar-flux-r-codec"
-    ),
-    LegacySurveyFluxI: CodecHFConfig(
-        codec_class=LogScalarCodec, repo_id="polymathic-ai/aion-scalar-flux-i-codec"
-    ),
-    LegacySurveyFluxZ: CodecHFConfig(
-        codec_class=LogScalarCodec, repo_id="polymathic-ai/aion-scalar-flux-z-codec"
-    ),
-    LegacySurveyFluxW1: CodecHFConfig(
-        codec_class=LogScalarCodec, repo_id="polymathic-ai/aion-scalar-flux-w1-codec"
-    ),
-    LegacySurveyFluxW2: CodecHFConfig(
-        codec_class=LogScalarCodec, repo_id="polymathic-ai/aion-scalar-flux-w2-codec"
-    ),
-    LegacySurveyFluxW3: CodecHFConfig(
-        codec_class=LogScalarCodec, repo_id="polymathic-ai/aion-scalar-flux-w3-codec"
-    ),
-    LegacySurveyFluxW4: CodecHFConfig(
-        codec_class=LogScalarCodec, repo_id="polymathic-ai/aion-scalar-flux-w4-codec"
-    ),
-    LegacySurveyShapeR: CodecHFConfig(
-        codec_class=LogScalarCodec, repo_id="polymathic-ai/aion-scalar-shape-r-codec"
-    ),
-    GaiaFluxG: CodecHFConfig(
-        codec_class=LogScalarCodec,
-        repo_id="polymathic-ai/aion-scalar-phot-g-mean-flux-codec",
-    ),
-    GaiaFluxBp: CodecHFConfig(
-        codec_class=LogScalarCodec,
-        repo_id="polymathic-ai/aion-scalar-phot-bp-mean-flux-codec",
-    ),
-    GaiaFluxRp: CodecHFConfig(
-        codec_class=LogScalarCodec,
-        repo_id="polymathic-ai/aion-scalar-phot-rp-mean-flux-codec",
-    ),
-    GaiaParallax: CodecHFConfig(
-        codec_class=LogScalarCodec, repo_id="polymathic-ai/aion-scalar-parallax-codec"
-    ),
-    # ScalarCodec
-    LegacySurveyShapeE1: CodecHFConfig(
-        codec_class=ScalarCodec, repo_id="polymathic-ai/aion-scalar-shape-e1-codec"
-    ),
-    LegacySurveyShapeE2: CodecHFConfig(
-        codec_class=ScalarCodec, repo_id="polymathic-ai/aion-scalar-shape-e2-codec"
-    ),
-    LegacySurveyEBV: CodecHFConfig(
-        codec_class=ScalarCodec, repo_id="polymathic-ai/aion-scalar-ebv-codec"
-    ),
-    HSCMagG: CodecHFConfig(
-        codec_class=ScalarCodec, repo_id="polymathic-ai/aion-scalar-g-cmodel-mag-codec"
-    ),
-    HSCMagR: CodecHFConfig(
-        codec_class=ScalarCodec, repo_id="polymathic-ai/aion-scalar-r-cmodel-mag-codec"
-    ),
-    HSCMagI: CodecHFConfig(
-        codec_class=ScalarCodec, repo_id="polymathic-ai/aion-scalar-i-cmodel-mag-codec"
-    ),
-    HSCMagZ: CodecHFConfig(
-        codec_class=ScalarCodec, repo_id="polymathic-ai/aion-scalar-z-cmodel-mag-codec"
-    ),
-    HSCMagY: CodecHFConfig(
-        codec_class=ScalarCodec, repo_id="polymathic-ai/aion-scalar-y-cmodel-mag-codec"
-    ),
-    HSCShape11: CodecHFConfig(
-        codec_class=ScalarCodec,
-        repo_id="polymathic-ai/aion-scalar-i-sdssshape-shape11-codec",
-    ),
-    HSCShape22: CodecHFConfig(
-        codec_class=ScalarCodec,
-        repo_id="polymathic-ai/aion-scalar-i-sdssshape-shape22-codec",
-    ),
-    HSCShape12: CodecHFConfig(
-        codec_class=ScalarCodec,
-        repo_id="polymathic-ai/aion-scalar-i-sdssshape-shape12-codec",
-    ),
-    HSCAG: CodecHFConfig(
-        codec_class=ScalarCodec, repo_id="polymathic-ai/aion-scalar-a-g-codec"
-    ),
-    HSCAR: CodecHFConfig(
-        codec_class=ScalarCodec, repo_id="polymathic-ai/aion-scalar-a-r-codec"
-    ),
-    HSCAI: CodecHFConfig(
-        codec_class=ScalarCodec, repo_id="polymathic-ai/aion-scalar-a-i-codec"
-    ),
-    HSCAZ: CodecHFConfig(
-        codec_class=ScalarCodec, repo_id="polymathic-ai/aion-scalar-a-z-codec"
-    ),
-    HSCAY: CodecHFConfig(
-        codec_class=ScalarCodec, repo_id="polymathic-ai/aion-scalar-a-y-codec"
-    ),
-    Ra: CodecHFConfig(
-        codec_class=ScalarCodec, repo_id="polymathic-ai/aion-scalar-ra-codec"
-    ),
-    Dec: CodecHFConfig(
-        codec_class=ScalarCodec, repo_id="polymathic-ai/aion-scalar-dec-codec"
-    ),
-    # MultiScalarCodec
-    GaiaXpBp: CodecHFConfig(
-        codec_class=MultiScalarCodec,
-        repo_id="polymathic-ai/aion-scalar-bp-coefficients-codec",
-    ),
-    GaiaXpRp: CodecHFConfig(
-        codec_class=MultiScalarCodec,
-        repo_id="polymathic-ai/aion-scalar-rp-coefficients-codec",
-    ),
-    # GridScalarCodec
-    Z: CodecHFConfig(
-        codec_class=GridScalarCodec, repo_id="polymathic-ai/aion-scalar-z-codec"
-    ),
+MODALITY_CODEC_MAPPING = {
+    Image: ImageCodec,
+    Spectrum: SpectrumCodec,
+    LegacySurveyCatalog: CatalogCodec,
+    LegacySurveySegmentationMap: ScalarFieldCodec,
+    LegacySurveyFluxG: LogScalarCodec,
+    LegacySurveyFluxR: LogScalarCodec,
+    LegacySurveyFluxI: LogScalarCodec,
+    LegacySurveyFluxZ: LogScalarCodec,
+    LegacySurveyFluxW1: LogScalarCodec,
+    LegacySurveyFluxW2: LogScalarCodec,
+    LegacySurveyFluxW3: LogScalarCodec,
+    LegacySurveyFluxW4: LogScalarCodec,
+    LegacySurveyShapeR: LogScalarCodec,
+    GaiaFluxG: LogScalarCodec,
+    GaiaFluxBp: LogScalarCodec,
+    GaiaFluxRp: LogScalarCodec,
+    GaiaParallax: LogScalarCodec,
+    LegacySurveyShapeE1: ScalarCodec,
+    LegacySurveyShapeE2: ScalarCodec,
+    LegacySurveyEBV: ScalarCodec,
+    HSCMagG: ScalarCodec,
+    HSCMagR: ScalarCodec,
+    HSCMagI: ScalarCodec,
+    HSCMagZ: ScalarCodec,
+    HSCMagY: ScalarCodec,
+    HSCShape11: ScalarCodec,
+    HSCShape22: ScalarCodec,
+    HSCShape12: ScalarCodec,
+    HSCAG: ScalarCodec,
+    HSCAR: ScalarCodec,
+    HSCAI: ScalarCodec,
+    HSCAZ: ScalarCodec,
+    HSCAY: ScalarCodec,
+    Ra: ScalarCodec,
+    Dec: ScalarCodec,
+    GaiaXpBp: MultiScalarCodec,
+    GaiaXpRp: MultiScalarCodec,
+    Z: GridScalarCodec,
 }
+
+HF_REPO_ID = "polymathic-ai/aion-base"

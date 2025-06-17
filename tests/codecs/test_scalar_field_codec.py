@@ -1,11 +1,14 @@
 import torch
 
 from aion.codecs import ScalarFieldCodec
+from aion.codecs.config import HF_REPO_ID
 from aion.modalities import LegacySurveySegmentationMap
 
 
 def test_scalar_field_tokenizer(data_dir):
-    codec = ScalarFieldCodec.from_pretrained("polymathic-ai/aion-scalar-field-codec")
+    codec = ScalarFieldCodec.from_pretrained(
+        HF_REPO_ID, modality=LegacySurveySegmentationMap
+    )
     codec.eval()
     input_batch = torch.load(
         data_dir / "scalar-field_codec_input_batch.pt", weights_only=False

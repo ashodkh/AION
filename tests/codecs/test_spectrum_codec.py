@@ -1,11 +1,12 @@
 import torch
 
-from aion.modalities import Spectrum
 from aion.codecs import SpectrumCodec
+from aion.codecs.config import HF_REPO_ID
+from aion.modalities import Spectrum
 
 
 def test_hf_previous_predictions(data_dir):
-    codec = SpectrumCodec.from_pretrained("polymathic-ai/aion-spectrum-codec")
+    codec = SpectrumCodec.from_pretrained(HF_REPO_ID, modality=Spectrum)
 
     input_batch = torch.load(data_dir / "SPECTRUM_input_batch.pt", weights_only=False)[
         "spectrum"

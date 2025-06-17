@@ -1,13 +1,14 @@
-import torch
-from huggingface_hub import PyTorchModelHubMixin
-from jaxtyping import Float, Real
 from typing import Type
 
-from aion.modalities import Spectrum
+import torch
+from jaxtyping import Float, Real
+
+from aion.codecs.base import Codec
 from aion.codecs.modules.convnext import ConvNextDecoder1d, ConvNextEncoder1d
 from aion.codecs.modules.spectrum import LatentSpectralGrid
 from aion.codecs.quantizers import LucidrainsLFQ, Quantizer, ScalarLinearQuantizer
-from aion.codecs.base import Codec
+from aion.codecs.utils import CodecPytorchHubMixin
+from aion.modalities import Spectrum
 
 
 class AutoencoderSpectrumCodec(Codec):
@@ -179,7 +180,7 @@ class AutoencoderSpectrumCodec(Codec):
         )
 
 
-class SpectrumCodec(AutoencoderSpectrumCodec, PyTorchModelHubMixin):
+class SpectrumCodec(AutoencoderSpectrumCodec, CodecPytorchHubMixin):
     """Spectrum codec based on convnext blocks."""
 
     def __init__(
