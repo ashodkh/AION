@@ -32,7 +32,7 @@ class SubsampledLinear(torch.nn.Module):
 
         # Normalize
         label_sizes = labels.sum(dim=1, keepdim=True)
-        scales = ((self.dim_in / label_sizes) ** 0.5).squeeze()
+        scales = ((self.dim_in / label_sizes) ** 0.5).squeeze(-1)
 
         # Apply linear layer
         return scales[:, None, None, None] * F.linear(x, self.weight, self.bias)
