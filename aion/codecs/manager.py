@@ -60,11 +60,6 @@ class CodecManager:
         # Look up configuration in CODEC_CONFIG
         if modality_type in MODALITY_CODEC_MAPPING:
             codec_class = MODALITY_CODEC_MAPPING[modality_type]
-        elif (
-            hasattr(modality_type, "__base__")
-            and modality_type.__base__ in MODALITY_CODEC_MAPPING
-        ):
-            codec_class = MODALITY_CODEC_MAPPING[modality_type.__base__]
         else:
             raise ModalityTypeError(
                 f"No codec configuration found for modality type: {modality_type.__name__}"

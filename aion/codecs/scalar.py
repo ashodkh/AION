@@ -64,7 +64,7 @@ class ScalarCodec(BaseScalarIdentityCodec):
         reservoir_size: int,
     ):
         super().__init__()
-        self._modality_class = next(m for m in ScalarModalities if m.name == modality)
+        self._modality_class = ScalarModalities[modality]
         self._quantizer = ScalarReservoirQuantizer(
             codebook_size=codebook_size,
             reservoir_size=reservoir_size,
@@ -80,7 +80,7 @@ class LogScalarCodec(BaseScalarIdentityCodec):
         min_log_value: float | None = -3,
     ):
         super().__init__()
-        self._modality_class = next(m for m in ScalarModalities if m.name == modality)
+        self._modality_class = ScalarModalities[modality]
         self._quantizer = ScalarLogReservoirQuantizer(
             codebook_size=codebook_size,
             reservoir_size=reservoir_size,
@@ -99,7 +99,7 @@ class MultiScalarCodec(BaseScalarIdentityCodec):
         num_quantizers: int,
     ):
         super().__init__()
-        self._modality_class = next(m for m in ScalarModalities if m.name == modality)
+        self._modality_class = ScalarModalities[modality]
         self._quantizer = MultiScalarCompressedReservoirQuantizer(
             compression_fns=compression_fns,
             decompression_fns=decompression_fns,
@@ -112,7 +112,7 @@ class MultiScalarCodec(BaseScalarIdentityCodec):
 class GridScalarCodec(BaseScalarIdentityCodec):
     def __init__(self, modality: str, codebook_size: int):
         super().__init__()
-        self._modality_class = next(m for m in ScalarModalities if m.name == modality)
+        self._modality_class = ScalarModalities[modality]
         self._quantizer = ScalarLinearQuantizer(
             codebook_size=codebook_size,
             range=(0.0, 1.0),

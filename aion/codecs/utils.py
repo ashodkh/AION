@@ -7,6 +7,7 @@ from huggingface_hub import hub_mixin
 from aion.codecs.base import Codec
 from aion.modalities import Modality
 
+
 ORIGINAL_CONFIG_NAME = hub_mixin.constants.CONFIG_NAME
 ORIGINAL_PYTORCH_WEIGHTS_NAME = hub_mixin.constants.PYTORCH_WEIGHTS_NAME
 ORIGINAL_SAFETENSORS_SINGLE_FILE = hub_mixin.constants.SAFETENSORS_SINGLE_FILE
@@ -79,6 +80,30 @@ class CodecPytorchHubMixin(hub_mixin.PyTorchModelHubMixin):
     Instead they lie in the transformer model repo as subfolders.
     """
 
+    @staticmethod
+    def _validate_codec_modality(codec: type[Codec], modality: type[Modality]):
+        """Validate that a codec class is compatible with a modality.
+
+        Args:
+            codec: The codec class to validate
+            modality: The modality type to validate against
+
+        Raises:
+            TypeError: If the codec is not a valid codec class or is incompatible with the modality
+            ValueError: If the modality has no corresponding codec configuration
+        """
+        # Import MODALITY_CODEC_MAPPING here to avoid circular import
+        from aion.codecs.config import MODALITY_CODEC_MAPPING
+
+        if not issubclass(codec, Codec):
+            raise TypeError("Only codecs can be loaded using this method.")
+        if modality not in MODALITY_CODEC_MAPPING:
+            raise ValueError(f"Modality {modality} has no corresponding codec.")
+        elif MODALITY_CODEC_MAPPING[modality] != codec:
+            raise TypeError(
+                f"Modality {modality} is associated with {MODALITY_CODEC_MAPPING[modality]} codec but {codec} requested."
+            )
+
     @classmethod
     def from_pretrained(
         cls,
@@ -104,8 +129,8 @@ class CodecPytorchHubMixin(hub_mixin.PyTorchModelHubMixin):
         Raises:
             ValueError: If the class is not a codec subclass or modality is invalid.
         """
-        if not issubclass(cls, Codec):
-            raise ValueError("Only codec classes can be loaded using this method.")
+        # Validate codec-modality compatibility
+        cls._validate_codec_modality(cls, modality)
 
         # Validate modality
         _validate_modality(modality)
