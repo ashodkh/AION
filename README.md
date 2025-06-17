@@ -28,14 +28,36 @@ Assuming you have PyTorch installed, you can install AION trivially with:
 pip install aion
 ```
 
-Then you can load the pretrained model and start using it:
+Then you can load the pretrained model and start analyzing astronomical data:
 ```python
+import torch
 from aion import AION
+from aion.codecs import CodecManager
+from aion.modalities import LegacySurveyImage
 
-# Load the pretrained model
-model = AION.from_pretrained('aion-base')
+# Load model and codec manager
+model = AION.from_pretrained('aion-base').to('cuda')  # or 'aion-large', 'aion-xlarge'
+codec_manager = CodecManager(device='cuda')
 
-# Your astronomical analysis begins here!
+# Prepare your astronomical data (example: Legacy Survey image)
+image = LegacySurveyImage(
+    flux=your_image_tensor,  # Shape: [batch, 4, height, width] for g,r,i,z bands
+    bands=['DES-G', 'DES-R', 'DES-I', 'DES-Z']
+)
+
+# Encode data to tokens
+tokens = codec_manager.encode(image)
+
+# Option 1: Extract embeddings for downstream tasks
+embeddings = model.encode(tokens, num_encoder_tokens=600)
+
+# Option 2: Generate predictions (e.g., redshift)
+from aion.modalities import Z
+predictions = model(
+    tokens,
+    target_mask={'tok_z': torch.zeros(batch_size, 1)},
+    num_encoder_tokens=600
+)
 ```
 
 ## 🔬 Scientific Overview
@@ -79,6 +101,88 @@ AION-1’s tokenizers cover **39 distinct data types**, grouped by survey and da
 > – Steps: Base (1.5 days on 64 H100), Large (2.5 days on 100 H100), XLarge (3.5 days on 288 H100)
 > – Optimizer: AdamW, peak LR 2 × 10⁻⁴, linear warmup + cosine decay
 
+## 🔧 Data Preparation
+
+AION uses a typed data system to understand the provenance of each astronomical observation. Each modality must be properly formatted:
+
+### Modality Types
+```python
+from aion.modalities import (
+    LegacySurveyImage, HSCImage,           # Images
+    DESISpectrum, SDSSSpectrum,            # Spectra
+    LegacySurveyFluxG, HSCMagG,            # Photometry
+    GaiaParallax, Z,                       # Scalars
+    # ... and 30+ more modalities
+)
+```
+
+### Example: Preparing Legacy Survey Data
+```python
+import torch
+from aion.modalities import LegacySurveyImage, LegacySurveyFluxG
+
+# Format image data (shape: [batch, 4, height, width])
+image = LegacySurveyImage(
+    flux=torch.tensor(image_data, dtype=torch.float32),
+    bands=['DES-G', 'DES-R', 'DES-I', 'DES-Z']
+)
+
+# Format scalar photometry
+flux_g = LegacySurveyFluxG(value=torch.tensor([flux_values]))
+```
+
+### Supported Data Formats
+| Survey | Modality | Required Format |
+|--------|----------|-----------------|
+| **Legacy Survey** | Images | 4-band (g,r,i,z), any resolution (auto-cropped to 96×96) |
+| **HSC** | Images | 5-band (g,r,i,z,y), any resolution |
+| **DESI/SDSS** | Spectra | Flux, inverse variance, wavelength arrays |
+| **Gaia** | BP/RP | Coefficient arrays (55 coefficients each) |
+| **All Surveys** | Scalars | Single values or 1D tensors |
+
+---
+
+## 💡 Key Use Cases
+
+### 🔍 Similarity Search
+Find galaxies similar to a query object across different modalities:
+```python
+# Extract embeddings for similarity search
+query_embedding = model.encode(codec_manager.encode(query_image))
+all_embeddings = model.encode(codec_manager.encode(*dataset_images))
+
+# Find most similar objects using cosine similarity
+from sklearn.metrics.pairwise import cosine_similarity
+similarity_scores = cosine_similarity(query_embedding, all_embeddings)
+similar_objects = similarity_scores.argsort()[::-1][:10]  # Top 10 similar
+```
+
+### 📊 Property Prediction
+Build lightweight models on AION embeddings:
+```python
+# Extract embeddings from multiple modalities
+embeddings = model.encode(codec_manager.encode(
+    image, spectrum, flux_g, flux_r, flux_i, flux_z
+), num_encoder_tokens=900)
+
+# Train simple regressor for stellar mass, redshift, etc.
+from sklearn.neighbors import KNeighborsRegressor
+regressor = KNeighborsRegressor(n_neighbors=5)
+regressor.fit(embeddings.mean(axis=1), target_property)
+```
+
+### 🌌 Generative Modeling
+Predict missing astronomical properties:
+```python
+# Predict redshift from photometry + morphology
+predictions = model(
+    codec_manager.encode(image, flux_g, flux_r, flux_i, flux_z),
+    target_mask={'tok_z': torch.zeros(batch_size, 1)},
+    num_encoder_tokens=600
+)
+redshift_probs = torch.softmax(predictions['tok_z'], dim=-1)
+```
+
 ## 📚 Documentation
 
 ### 🎓 Tutorials
@@ -116,37 +220,13 @@ pip install torch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0 --index-url https
 pip install aion
 ```
 
-## 🤝 Contributing
-
-We welcome contributions from the astronomical and ML communities!
-
-### Development Setup
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Install development dependencies:
-   ```bash
-   pip install -e .[torch,dev]
-   ```
-4. Make your changes and ensure tests pass:
-   ```bash
-   pytest
-   ```
-5. Run linting:
-   ```bash
-   ruff check .
-   ```
-6. Commit your changes (`git commit -m 'Add amazing feature'`)
-7. Push to the branch (`git push origin feature/amazing-feature`)
-8. Open a Pull Request
-
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🌟 Acknowledgments
 
-AION is developed by [Polymathic AI](https://polymathic-ai.org/), advancing the frontier of AI for scientific discovery.
+AION is developed by [Polymathic AI](https://polymathic-ai.org/), advancing the frontier of AI for scientific applications.
 
 ## 📬 Contact
 
