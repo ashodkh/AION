@@ -225,6 +225,6 @@ class AION(FM):
             idx = self.modality_info[mod]["id"]
             mod_logits[mod] = self.decoder_embeddings[mod].forward_logits(
                 decoder_output[decoder_mod_mask == idx]
-            )
+            ).reshape(B, target_mask[mod].shape[1], -1)
 
         return mod_logits
