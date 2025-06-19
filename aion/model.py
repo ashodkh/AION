@@ -186,7 +186,7 @@ class AION(FM):
         # Dynamically compute the number of encoder tokens
         num_encoder_tokens = 0
         for mod in input_dict.keys():
-            num_encoder_tokens += input_dict[mod].shape[1]
+            num_encoder_tokens += input_dict[mod].shape[1] if input_dict[mod].dim() == 2 else 1
 
         # Dynamically build the target mask and decoder tokens
         target_mask = {}
@@ -225,6 +225,6 @@ class AION(FM):
             idx = self.modality_info[mod]["id"]
             mod_logits[mod] = self.decoder_embeddings[mod].forward_logits(
                 decoder_output[decoder_mod_mask == idx]
-            ).reshape(B, target_mask[mod].shape[1], -1)
+            )
 
         return mod_logits
