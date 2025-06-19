@@ -212,6 +212,6 @@ class AION(FM):
             idx = self.modality_info[mod]["id"]
             mod_logits[mod] = self.decoder_embeddings[mod].forward_logits(
                 decoder_output[decoder_mod_mask == idx]
-            )
+            ).to(torch.int32)
 
         return mod_logits
