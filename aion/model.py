@@ -166,10 +166,9 @@ class AION(FM):
     def forward(
         self,
         input_dict: Dict[str, torch.Tensor],
-        target_mask: Dict[str, torch.Tensor],
+        target_mask: Optional[Dict[str, torch.Tensor]],
         input_mask: Optional[Dict[str, torch.Tensor]] = None,
-        num_decoder_tokens: int = 256,
-        num_encoder_tokens: int = 256,
+        num_decoder_tokens: Optional[int] = None,
     ) -> torch.Tensor:
         """
         The forward function returns the logits of the requested target outputs, given the input data.
@@ -178,11 +177,21 @@ class AION(FM):
             input_dict (Dict[str, torch.Tensor]): Input data dictionary.
             target_mask (Dict[str, torch.Tensor]): Target mask dictionary, defines which modalities to predict, and which tokens within that modality.
             input_mask (Dict[str, torch.Tensor], optional): Input mask dictionary. Defaults to None.
-            num_encoder_tokens (int, optional): Maximum number of encoder tokens. Defaults to 256.
 
         Returns:
             torch.Tensor: Output tensor of the model.
         """
+        # Dynamically compute the number of encoder & decoder tokens
+        num_encoder_tokens, num_decoder_tokens = 0, 0
+        for mod in input_dict.keys():
+            num_encoder_tokens += input_dict[mod].shape[1]
+
+        for mod in target_mask.keys():
+            num_decoder_tokens += target_mask[mod].shape[1]
+
+        # Get batch size:
+        batch_size = list(input_dict.values())[0].shape[0]
+
         # Embedding inputs and targets
         encoder_tokens, encoder_emb, encoder_mask, _ = self.embed_inputs(
             input_dict, mask=input_mask, num_encoder_tokens=num_encoder_tokens
@@ -212,6 +221,6 @@ class AION(FM):
             idx = self.modality_info[mod]["id"]
             mod_logits[mod] = self.decoder_embeddings[mod].forward_logits(
                 decoder_output[decoder_mod_mask == idx]
-            ).to(torch.int32)
+            ).reshape(batch_size, target_mask[mod].shape[1], -1)
 
         return mod_logits
