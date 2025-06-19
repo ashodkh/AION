@@ -166,31 +166,35 @@ class AION(FM):
     def forward(
         self,
         input_dict: Dict[str, torch.Tensor],
-        target_mask: Optional[Dict[str, torch.Tensor]],
+        target_modality: list[object],
         input_mask: Optional[Dict[str, torch.Tensor]] = None,
-        num_decoder_tokens: Optional[int] = None,
     ) -> torch.Tensor:
         """
         The forward function returns the logits of the requested target outputs, given the input data.
 
         Args:
             input_dict (Dict[str, torch.Tensor]): Input data dictionary.
-            target_mask (Dict[str, torch.Tensor]): Target mask dictionary, defines which modalities to predict, and which tokens within that modality.
-            input_mask (Dict[str, torch.Tensor], optional): Input mask dictionary. Defaults to None.
+            target_modality (list[object]): List of target modalities to be predicted.
+            input_mask (Dict[str, torch.Tensor], optional): Mask dictionary. Defaults to None.
 
         Returns:
             torch.Tensor: Output tensor of the model.
         """
-        # Dynamically compute the number of encoder & decoder tokens
-        num_encoder_tokens, num_decoder_tokens = 0, 0
+        # Get batch size:
+        B = list(input_dict.values())[0].shape[0]
+
+        # Dynamically compute the number of encoder tokens
+        num_encoder_tokens = 0
         for mod in input_dict.keys():
             num_encoder_tokens += input_dict[mod].shape[1]
 
-        for mod in target_mask.keys():
-            num_decoder_tokens += target_mask[mod].shape[1]
-
-        # Get batch size:
-        batch_size = list(input_dict.values())[0].shape[0]
+        # Dynamically build the target mask and decoder tokens
+        target_mask = {}
+        num_decoder_tokens = 0
+        target_modality = [target_modality] if not isinstance(target_modality, list) else target_modality
+        for mod in target_modality:
+            target_mask[mod.token_key] = torch.zeros(B, mod.num_tokens).to(torch.bool)
+            num_decoder_tokens += mod.num_tokens
 
         # Embedding inputs and targets
         encoder_tokens, encoder_emb, encoder_mask, _ = self.embed_inputs(
@@ -221,6 +225,6 @@ class AION(FM):
             idx = self.modality_info[mod]["id"]
             mod_logits[mod] = self.decoder_embeddings[mod].forward_logits(
                 decoder_output[decoder_mod_mask == idx]
-            ).reshape(batch_size, target_mask[mod].shape[1], -1)
+            ).reshape(B, target_mask[mod].shape[1], -1)
 
         return mod_logits
