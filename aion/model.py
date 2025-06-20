@@ -196,13 +196,18 @@ class AION(FM):
             target_mask[mod.token_key] = torch.zeros(B, mod.num_tokens).to(torch.bool)
             num_decoder_tokens += mod.num_tokens
 
-        return self._forward(
+        logit_dict = self._forward(
             input_dict,
             target_mask=target_mask,
             input_mask=input_mask,
             num_decoder_tokens=num_decoder_tokens,
             num_encoder_tokens=num_encoder_tokens,
         )
+
+        for mod in logit_dict.keys():
+            logit_dict[mod] = logit_dict[mod].reshape(B, logit_dict[mod].shape[1], -1)
+        
+        return logit_dict
     
     def _forward(
         self,
