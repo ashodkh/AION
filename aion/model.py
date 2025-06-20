@@ -170,7 +170,7 @@ class AION(FM):
         input_mask: Optional[Dict[str, torch.Tensor]] = None,
     ) -> torch.Tensor:
         """
-        The forward function returns the logits of the requested target outputs, given the input data.
+        Helpful function to compute the logits of the requested target outputs, given the input data.
 
         Args:
             input_dict (Dict[str, torch.Tensor]): Input data dictionary.
@@ -196,6 +196,25 @@ class AION(FM):
             target_mask[mod.token_key] = torch.zeros(B, mod.num_tokens).to(torch.bool)
             num_decoder_tokens += mod.num_tokens
 
+        return self._forward(
+            input_dict,
+            target_mask=target_mask,
+            input_mask=input_mask,
+            num_decoder_tokens=num_decoder_tokens,
+            num_encoder_tokens=num_encoder_tokens,
+        )
+    
+    def _forward(
+        self,
+        input_dict: Dict[str, torch.Tensor],
+        target_mask: Dict[str, torch.Tensor],
+        input_mask: Optional[Dict[str, torch.Tensor]] = None,
+        num_decoder_tokens: int = 256,
+        num_encoder_tokens: int = 256,
+    ) -> torch.Tensor:
+        """
+        The forward function returns the logits of the requested target outputs, given the input data.
+        """
         # Embedding inputs and targets
         encoder_tokens, encoder_emb, encoder_mask, _ = self.embed_inputs(
             input_dict, mask=input_mask, num_encoder_tokens=num_encoder_tokens
@@ -225,6 +244,6 @@ class AION(FM):
             idx = self.modality_info[mod]["id"]
             mod_logits[mod] = self.decoder_embeddings[mod].forward_logits(
                 decoder_output[decoder_mod_mask == idx]
-            ).reshape(B, target_mask[mod].shape[1], -1)
+            )
 
         return mod_logits
