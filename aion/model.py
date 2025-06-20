@@ -205,7 +205,9 @@ class AION(FM):
         )
 
         for mod in logit_dict.keys():
-            logit_dict[mod] = logit_dict[mod].reshape(B, logit_dict[mod].shape[1], -1)
+            logit_dict[mod] = logit_dict[mod].view(
+                B, target_mask[mod].shape[1], -1
+            )
         
         return logit_dict
     
