@@ -201,9 +201,7 @@ predictions = model(
 redshift_probs = torch.softmax(predictions['tok_z'], dim=-1)
 ```
 
-## 📚 Documentation
-
-### 🎓 Tutorials
+## 🎓 Tutorials
 
 Start with our interactive tutorial:
 - **[Open in Google Colab](https://colab.research.google.com/github/PolymathicAI/AION/blob/main/notebooks/Tutorial.ipynb)** - Learn AION basics interactively, no local setup required!
@@ -217,13 +215,13 @@ AION offers flexible installation options to suit your environment and requireme
 To install AION with PyTorch included:
 
 ```bash
-pip install aion[torch]
+pip install polymathic-aion[torch]
 ```
 
 For contributors and developers:
 
 ```bash
-pip install aion[torch,dev]
+pip install polymathic-aion[torch,dev]
 ```
 
 This includes testing frameworks, linting tools, and development dependencies.
@@ -235,7 +233,7 @@ For specific PyTorch versions (e.g., CUDA support):
 pip install torch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0 --index-url https://download.pytorch.org/whl/cu124
 
 # Then install AION
-pip install aion
+pip install polymathic-aion
 ```
 
 ## 📄 License
