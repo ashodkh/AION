@@ -24,6 +24,20 @@
 
 AION-1 is a cutting-edge large omnimodal model specifically designed for astronomical surveys. It seamlessly integrates multiple data modalities, and enables simple adaptation to a wide range of astronomical tasks.
 
+## Alpha Testing
+
+AION-1 model weights are hosted on Huggingface behind gates during the alpha testers phase. First, ensure that you have access to the Hugginface model weights. If you don't have access, you can request it directly on the [hugginface repo here](https://huggingface.co/polymathic-ai/aion-base).
+
+Once you have access, you will need to set up a huggingface token locally. This can be done by first installing hugginface_hub:
+```bash
+pip install huggingface_hub
+```
+
+and then logging in via
+```bash
+huggingface-cli login --token YOUR_HF_TOKEN
+```
+All of the ensuing steps should work out of the box after this point.
 
 ## 🚀 Quick Start
 
