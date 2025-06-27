@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=61", "setuptools_scm>=8.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "aion"
-version = "0.0.1"
+dynamic = ["version"]
 description = "AstronomIcal Omnimodal Network"
 requires-python = ">=3.10"
 dependencies = [
@@ -43,3 +43,9 @@ ignore = ["F722"]
 [tool.setuptools.packages.find]
 include = ["aion*"]
 # Only include the 'aion' package and its subpackages
+
+[tool.setuptools_scm]
+# This section configures setuptools_scm
+# It will use git tags to determine version numbers
+# If no tags exist, it will use 0.1.dev0+g<commit_hash>
+fallback_version = "0.1.dev0"
