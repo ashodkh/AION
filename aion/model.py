@@ -186,12 +186,18 @@ class AION(FM):
         # Dynamically compute the number of encoder tokens
         num_encoder_tokens = 0
         for mod in input_dict.keys():
-            num_encoder_tokens += input_dict[mod].shape[1] if input_dict[mod].dim() == 2 else 1
+            num_encoder_tokens += (
+                input_dict[mod].shape[1] if input_dict[mod].dim() == 2 else 1
+            )
 
         # Dynamically build the target mask and decoder tokens
         target_mask = {}
         num_decoder_tokens = 0
-        target_modality = [target_modality] if not isinstance(target_modality, list) else target_modality
+        target_modality = (
+            [target_modality]
+            if not isinstance(target_modality, list)
+            else target_modality
+        )
         for mod in target_modality:
             target_mask[mod.token_key] = torch.zeros(B, mod.num_tokens).to(torch.bool)
             num_decoder_tokens += mod.num_tokens
@@ -205,12 +211,10 @@ class AION(FM):
         )
 
         for mod in logit_dict.keys():
-            logit_dict[mod] = logit_dict[mod].view(
-                B, target_mask[mod].shape[1], -1
-            )
-        
+            logit_dict[mod] = logit_dict[mod].view(B, target_mask[mod].shape[1], -1)
+
         return logit_dict
-    
+
     def _forward(
         self,
         input_dict: Dict[str, torch.Tensor],
