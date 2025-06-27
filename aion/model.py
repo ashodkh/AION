@@ -166,6 +166,58 @@ class AION(FM):
     def forward(
         self,
         input_dict: Dict[str, torch.Tensor],
+        target_modality: list[object],
+        input_mask: Optional[Dict[str, torch.Tensor]] = None,
+    ) -> torch.Tensor:
+        """
+        Helpful function to compute the logits of the requested target outputs, given the input data.
+
+        Args:
+            input_dict (Dict[str, torch.Tensor]): Input data dictionary.
+            target_modality (list[object]): List of target modalities to be predicted.
+            input_mask (Dict[str, torch.Tensor], optional): Mask dictionary. Defaults to None.
+
+        Returns:
+            torch.Tensor: Output tensor of the model.
+        """
+        # Get batch size:
+        B = list(input_dict.values())[0].shape[0]
+
+        # Dynamically compute the number of encoder tokens
+        num_encoder_tokens = 0
+        for mod in input_dict.keys():
+            num_encoder_tokens += (
+                input_dict[mod].shape[1] if input_dict[mod].dim() == 2 else 1
+            )
+
+        # Dynamically build the target mask and decoder tokens
+        target_mask = {}
+        num_decoder_tokens = 0
+        target_modality = (
+            [target_modality]
+            if not isinstance(target_modality, list)
+            else target_modality
+        )
+        for mod in target_modality:
+            target_mask[mod.token_key] = torch.zeros(B, mod.num_tokens).to(torch.bool)
+            num_decoder_tokens += mod.num_tokens
+
+        logit_dict = self._forward(
+            input_dict,
+            target_mask=target_mask,
+            input_mask=input_mask,
+            num_decoder_tokens=num_decoder_tokens,
+            num_encoder_tokens=num_encoder_tokens,
+        )
+
+        for mod in logit_dict.keys():
+            logit_dict[mod] = logit_dict[mod].view(B, target_mask[mod].shape[1], -1)
+
+        return logit_dict
+
+    def _forward(
+        self,
+        input_dict: Dict[str, torch.Tensor],
         target_mask: Dict[str, torch.Tensor],
         input_mask: Optional[Dict[str, torch.Tensor]] = None,
         num_decoder_tokens: int = 256,
@@ -173,15 +225,6 @@ class AION(FM):
     ) -> torch.Tensor:
         """
         The forward function returns the logits of the requested target outputs, given the input data.
-
-        Args:
-            input_dict (Dict[str, torch.Tensor]): Input data dictionary.
-            target_mask (Dict[str, torch.Tensor]): Target mask dictionary, defines which modalities to predict, and which tokens within that modality.
-            input_mask (Dict[str, torch.Tensor], optional): Input mask dictionary. Defaults to None.
-            num_encoder_tokens (int, optional): Maximum number of encoder tokens. Defaults to 256.
-
-        Returns:
-            torch.Tensor: Output tensor of the model.
         """
         # Embedding inputs and targets
         encoder_tokens, encoder_emb, encoder_mask, _ = self.embed_inputs(

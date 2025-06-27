@@ -18,6 +18,10 @@
 
 ## 🎯 Overview
 
+<div align="center">
+    <img src="assets/aion.png" alt="AION Logo" width="600">
+</div>
+
 AION-1 is a cutting-edge large omnimodal model specifically designed for astronomical surveys. It seamlessly integrates multiple data modalities, and enables simple adaptation to a wide range of astronomical tasks.
 
 
@@ -142,7 +146,7 @@ flux_g = LegacySurveyFluxG(value=torch.tensor([flux_values]))
 
 ---
 
-## 💡 Key Use Cases
+## 💡 Example Use Cases
 
 ### 🔍 Similarity Search
 Find galaxies similar to a query object across different modalities:

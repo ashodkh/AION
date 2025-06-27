@@ -75,12 +75,14 @@ class HSCImage(Image):
     """HSC image modality data."""
 
     token_key: ClassVar[str] = "tok_image_hsc"
+    num_tokens: ClassVar[int] = 576
 
 
 class LegacySurveyImage(Image):
     """Legacy Survey image modality data."""
 
     token_key: ClassVar[str] = "tok_image"
+    num_tokens: ClassVar[int] = 576
 
 
 @dataclass
@@ -109,12 +111,14 @@ class DESISpectrum(Spectrum):
     """DESI spectrum modality data."""
 
     token_key: ClassVar[str] = "tok_spectrum_desi"
+    num_tokens: ClassVar[int] = 273
 
 
 class SDSSSpectrum(Spectrum):
     """SDSS spectrum modality data."""
 
     token_key: ClassVar[str] = "tok_spectrum_sdss"
+    num_tokens: ClassVar[int] = 273
 
 
 # Catalog modality
@@ -170,6 +174,7 @@ class LegacySurveyFluxG(Scalar):
 
     name: ClassVar[str] = "FLUX_G"
     token_key: ClassVar[str] = "tok_flux_g"
+    num_tokens: ClassVar[int] = 1
 
 
 class LegacySurveyFluxR(Scalar):
@@ -177,6 +182,7 @@ class LegacySurveyFluxR(Scalar):
 
     name: ClassVar[str] = "FLUX_R"
     token_key: ClassVar[str] = "tok_flux_r"
+    num_tokens: ClassVar[int] = 1
 
 
 class LegacySurveyFluxI(Scalar):
@@ -184,6 +190,7 @@ class LegacySurveyFluxI(Scalar):
 
     name: ClassVar[str] = "FLUX_I"
     token_key: ClassVar[str] = "tok_flux_i"
+    num_tokens: ClassVar[int] = 1
 
 
 class LegacySurveyFluxZ(Scalar):
@@ -191,6 +198,7 @@ class LegacySurveyFluxZ(Scalar):
 
     name: ClassVar[str] = "FLUX_Z"
     token_key: ClassVar[str] = "tok_flux_z"
+    num_tokens: ClassVar[int] = 1
 
 
 class LegacySurveyFluxW1(Scalar):
@@ -198,6 +206,7 @@ class LegacySurveyFluxW1(Scalar):
 
     name: ClassVar[str] = "FLUX_W1"
     token_key: ClassVar[str] = "tok_flux_w1"
+    num_tokens: ClassVar[int] = 1
 
 
 class LegacySurveyFluxW2(Scalar):
@@ -205,6 +214,7 @@ class LegacySurveyFluxW2(Scalar):
 
     name: ClassVar[str] = "FLUX_W2"
     token_key: ClassVar[str] = "tok_flux_w2"
+    num_tokens: ClassVar[int] = 1
 
 
 class LegacySurveyFluxW3(Scalar):
@@ -212,6 +222,7 @@ class LegacySurveyFluxW3(Scalar):
 
     name: ClassVar[str] = "FLUX_W3"
     token_key: ClassVar[str] = "tok_flux_w3"
+    num_tokens: ClassVar[int] = 1
 
 
 class LegacySurveyFluxW4(Scalar):
@@ -219,6 +230,7 @@ class LegacySurveyFluxW4(Scalar):
 
     name: ClassVar[str] = "FLUX_W4"
     token_key: ClassVar[str] = "tok_flux_w4"
+    num_tokens: ClassVar[int] = 1
 
 
 # Shape parameters
@@ -227,6 +239,7 @@ class LegacySurveyShapeR(Scalar):
 
     name: ClassVar[str] = "SHAPE_R"
     token_key: ClassVar[str] = "tok_shape_r"
+    num_tokens: ClassVar[int] = 1
 
 
 class LegacySurveyShapeE1(Scalar):
@@ -234,6 +247,7 @@ class LegacySurveyShapeE1(Scalar):
 
     name: ClassVar[str] = "SHAPE_E1"
     token_key: ClassVar[str] = "tok_shape_e1"
+    num_tokens: ClassVar[int] = 1
 
 
 class LegacySurveyShapeE2(Scalar):
@@ -241,6 +255,7 @@ class LegacySurveyShapeE2(Scalar):
 
     name: ClassVar[str] = "SHAPE_E2"
     token_key: ClassVar[str] = "tok_shape_e2"
+    num_tokens: ClassVar[int] = 1
 
 
 # Other scalar properties
@@ -249,6 +264,7 @@ class LegacySurveyEBV(Scalar):
 
     name: ClassVar[str] = "EBV"
     token_key: ClassVar[str] = "tok_ebv"
+    num_tokens: ClassVar[int] = 1
 
 
 # Spectroscopic redshift
@@ -257,6 +273,7 @@ class Z(Scalar):
 
     name: ClassVar[str] = "Z"
     token_key: ClassVar[str] = "tok_z"
+    num_tokens: ClassVar[int] = 1
 
 
 # Extinction values from HSC
@@ -265,6 +282,7 @@ class HSCAG(Scalar):
 
     name: ClassVar[str] = "a_g"
     token_key: ClassVar[str] = "tok_a_g"
+    num_tokens: ClassVar[int] = 1
 
 
 class HSCAR(Scalar):
@@ -272,6 +290,7 @@ class HSCAR(Scalar):
 
     name: ClassVar[str] = "a_r"
     token_key: ClassVar[str] = "tok_a_r"
+    num_tokens: ClassVar[int] = 1
 
 
 class HSCAI(Scalar):
@@ -279,6 +298,7 @@ class HSCAI(Scalar):
 
     name: ClassVar[str] = "a_i"
     token_key: ClassVar[str] = "tok_a_i"
+    num_tokens: ClassVar[int] = 1
 
 
 class HSCAZ(Scalar):
@@ -286,6 +306,7 @@ class HSCAZ(Scalar):
 
     name: ClassVar[str] = "a_z"
     token_key: ClassVar[str] = "tok_a_z"
+    num_tokens: ClassVar[int] = 1
 
 
 class HSCAY(Scalar):
@@ -293,6 +314,7 @@ class HSCAY(Scalar):
 
     name: ClassVar[str] = "a_y"
     token_key: ClassVar[str] = "tok_a_y"
+    num_tokens: ClassVar[int] = 1
 
 
 class HSCMagG(Scalar):
@@ -300,6 +322,7 @@ class HSCMagG(Scalar):
 
     name: ClassVar[str] = "g_cmodel_mag"
     token_key: ClassVar[str] = "tok_mag_g"
+    num_tokens: ClassVar[int] = 1
 
 
 class HSCMagR(Scalar):
@@ -307,6 +330,7 @@ class HSCMagR(Scalar):
 
     name: ClassVar[str] = "r_cmodel_mag"
     token_key: ClassVar[str] = "tok_mag_r"
+    num_tokens: ClassVar[int] = 1
 
 
 class HSCMagI(Scalar):
@@ -314,6 +338,7 @@ class HSCMagI(Scalar):
 
     name: ClassVar[str] = "i_cmodel_mag"
     token_key: ClassVar[str] = "tok_mag_i"
+    num_tokens: ClassVar[int] = 1
 
 
 class HSCMagZ(Scalar):
@@ -321,6 +346,7 @@ class HSCMagZ(Scalar):
 
     name: ClassVar[str] = "z_cmodel_mag"
     token_key: ClassVar[str] = "tok_mag_z"
+    num_tokens: ClassVar[int] = 1
 
 
 class HSCMagY(Scalar):
@@ -328,6 +354,7 @@ class HSCMagY(Scalar):
 
     name: ClassVar[str] = "y_cmodel_mag"
     token_key: ClassVar[str] = "tok_mag_y"
+    num_tokens: ClassVar[int] = 1
 
 
 class HSCShape11(Scalar):
@@ -335,6 +362,7 @@ class HSCShape11(Scalar):
 
     name: ClassVar[str] = "i_sdssshape_shape11"
     token_key: ClassVar[str] = "tok_shape11"
+    num_tokens: ClassVar[int] = 1
 
 
 class HSCShape22(Scalar):
@@ -342,6 +370,7 @@ class HSCShape22(Scalar):
 
     name: ClassVar[str] = "i_sdssshape_shape22"
     token_key: ClassVar[str] = "tok_shape22"
+    num_tokens: ClassVar[int] = 1
 
 
 class HSCShape12(Scalar):
@@ -349,6 +378,7 @@ class HSCShape12(Scalar):
 
     name: ClassVar[str] = "i_sdssshape_shape12"
     token_key: ClassVar[str] = "tok_shape12"
+    num_tokens: ClassVar[int] = 1
 
 
 # Gaia modalities
@@ -357,6 +387,7 @@ class GaiaFluxG(Scalar):
 
     name: ClassVar[str] = "phot_g_mean_flux"
     token_key: ClassVar[str] = "tok_flux_g_gaia"
+    num_tokens: ClassVar[int] = 1
 
 
 class GaiaFluxBp(Scalar):
@@ -364,6 +395,7 @@ class GaiaFluxBp(Scalar):
 
     name: ClassVar[str] = "phot_bp_mean_flux"
     token_key: ClassVar[str] = "tok_flux_bp_gaia"
+    num_tokens: ClassVar[int] = 1
 
 
 class GaiaFluxRp(Scalar):
@@ -371,6 +403,7 @@ class GaiaFluxRp(Scalar):
 
     name: ClassVar[str] = "phot_rp_mean_flux"
     token_key: ClassVar[str] = "tok_flux_rp_gaia"
+    num_tokens: ClassVar[int] = 1
 
 
 class GaiaParallax(Scalar):
@@ -378,6 +411,7 @@ class GaiaParallax(Scalar):
 
     name: ClassVar[str] = "parallax"
     token_key: ClassVar[str] = "tok_parallax"
+    num_tokens: ClassVar[int] = 1
 
 
 class Ra(Scalar):
@@ -385,6 +419,7 @@ class Ra(Scalar):
 
     name: ClassVar[str] = "ra"
     token_key: ClassVar[str] = "tok_ra"
+    num_tokens: ClassVar[int] = 1
 
 
 class Dec(Scalar):
@@ -392,6 +427,7 @@ class Dec(Scalar):
 
     name: ClassVar[str] = "dec"
     token_key: ClassVar[str] = "tok_dec"
+    num_tokens: ClassVar[int] = 1
 
 
 class GaiaXpBp(Scalar):
@@ -399,6 +435,7 @@ class GaiaXpBp(Scalar):
 
     name: ClassVar[str] = "bp_coefficients"
     token_key: ClassVar[str] = "tok_xp_bp"
+    num_tokens: ClassVar[int] = 55
 
 
 class GaiaXpRp(Scalar):
@@ -406,6 +443,7 @@ class GaiaXpRp(Scalar):
 
     name: ClassVar[str] = "rp_coefficients"
     token_key: ClassVar[str] = "tok_xp_rp"
+    num_tokens: ClassVar[int] = 55
 
 
 ScalarModalities = {
