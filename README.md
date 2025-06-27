@@ -43,7 +43,7 @@ All of the ensuing steps should work out of the box after this point.
 
 Assuming you have PyTorch installed, you can install AION trivially with:
 ```bash
-pip install aion
+pip install polymathic-aion
 ```
 
 Then you can load the pretrained model and start analyzing astronomical data:
