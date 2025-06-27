@@ -5,8 +5,39 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "polymathic-aion"
 dynamic = ["version"]
-description = "AstronomIcal Omnimodal Network"
+description = "AstronomIcal Omnimodal Network - Polymathic's Large Omnimodal Model for Astronomy"
+readme = "README.md"
 requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Polymathic AI", email = "info@polymathic-ai.org"},
+]
+maintainers = [
+    {name = "Polymathic AI", email = "info@polymathic-ai.org"},
+]
+keywords = [
+    "astronomy",
+    "astrophysics",
+    "machine learning",
+    "transformer",
+    "multimodal",
+    "deep learning",
+    "scientific computing",
+    "AI",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Physics",
+]
 dependencies = [
     "einops>=0.7.0",
     "huggingface_hub>=0.24.7",
@@ -15,6 +46,14 @@ dependencies = [
     "scipy",
     "tokenizers>=0.15.2",
 ]
+
+[project.urls]
+Homepage = "https://polymathic-ai.org/"
+Documentation = "https://polymathic-ai.github.io/AION/"
+Repository = "https://github.com/PolymathicAI/AION"
+"Bug Tracker" = "https://github.com/PolymathicAI/AION/issues"
+"Discussion" = "https://github.com/PolymathicAI/AION/discussions"
+"Hugging Face" = "https://huggingface.co/polymathic-ai/aion-base"
 
 [project.optional-dependencies]
 torch = [
