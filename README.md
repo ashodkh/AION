@@ -71,10 +71,9 @@ embeddings = model.encode(tokens, num_encoder_tokens=600)
 
 # Option 2: Generate predictions (e.g., redshift)
 from aion.modalities import Z
-predictions = model(
-    tokens,
-    target_mask={'tok_z': torch.zeros(batch_size, 1)},
-    num_encoder_tokens=600
+preds = model(
+    codec_manager.encode(image),
+    target_modality=Z,
 )
 ```
 
