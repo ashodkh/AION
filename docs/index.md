@@ -26,84 +26,58 @@ Compared to traditional machine learning approaches in Astronomy, AION-1 stands 
 
 ## 🚀 Quick Start
 
-Getting started with AION-1 is straightforward:
-
-```python
-# Minimal end-to-end example
-from aion import AION
-from aion.codecs import CodecManager
-from aion.modalities import (LegacySurveyImage, LegacySurveyFluxG,
-LegacySurveyFluxR, LegacySurveyFluxI, LegacySurveyFluxZ)
-
-# 1) Load a pre-trained checkpoint (300 M parameters)
-model = AION.from_pretrained('polymathic-ai/aion-base').to('cuda').eval()
-codec_manager = CodecManager(device='cuda') # Manages codecs for each modality
-
-# 2) Prepare demo inputs (96×96 g,r,i,z cut-out and photometry)
-# Create image modality
-image = LegacySurveyImage(
-   flux=data["legacysurvey_image_flux"],
-   bands=["DES-G", "DES-R", "DES-I", "DES-Z"],
-)
-
-# Create flux modalities
-g = LegacySurveyFluxG(value=data["legacysurvey_FLUX_G"])
-r = LegacySurveyFluxR(value=data["legacysurvey_FLUX_R"])
-i = LegacySurveyFluxI(value=data["legacysurvey_FLUX_I"])
-z = LegacySurveyFluxZ(value=data["legacysurvey_FLUX_Z"])
-
-# Encode input modalities into tokens
-tokens = codec_manager.encode(image, g, r, i, z)
-
-# 3) Generate a redshift distribution from these set of inputs
-predictions = model(
-    tokens,
-    target_mask={"tok_z": torch.zeros(batch_size, 1)},
-    num_encoder_tokens=600
-)
-redshift_logits = predictions["tok_z"]  # Shape: [batch, sequence, vocab_size]
-
-# 4) Extract joint embeddings for downstream use
-embeddings = model.encode(tokens, num_encoder_tokens=600)  # Shape: [batch, seq_len, hidden_dim]
+Assuming you have PyTorch installed, you can install AION trivially with:
+```bash
+pip install polymathic-aion
 ```
 
-## 📚 Documentation Overview
+Then you can load the pretrained model and start analyzing astronomical data:
+```python
+import torch
+from aion import AION
+from aion.codecs import CodecManager
+from aion.modalities import LegacySurveyImage
+
+# Load model and codec manager
+model = AION.from_pretrained('aion-base').to('cuda')  # or 'aion-large', 'aion-xlarge'
+codec_manager = CodecManager(device='cuda')
+
+# Prepare your astronomical data (example: Legacy Survey image)
+image = LegacySurveyImage(
+    flux=your_image_tensor,  # Shape: [batch, 4, height, width] for g,r,i,z bands
+    bands=['DES-G', 'DES-R', 'DES-I', 'DES-Z']
+)
+
+# Encode data to tokens
+tokens = codec_manager.encode(image)
+
+# Option 1: Extract embeddings for downstream tasks
+embeddings = model.encode(tokens, num_encoder_tokens=600)
+
+# Option 2: Generate predictions (e.g., redshift)
+from aion.modalities import Z
+preds = model(
+    codec_manager.encode(image),
+    target_modality=Z,
+)
+```
+
+## 📚 Documentation
 
 ```{eval-rst}
-.. grid:: 2 2 2 4
+.. grid:: 1 1 1 2
    :gutter: 3
-
-   .. grid-item-card:: Installation & Setup
-      :link: installation.html
-      :class-card: doc-card
-
-      Environment setup, dependencies, and configuration
-
-   .. grid-item-card:: Model Specifications
-      :link: architecture.html
-      :class-card: doc-card
-
-      Deep dive into tokenization, transformers, and trarining data
-
-   .. grid-item-card:: Usage Guide
-      :link: usage.html
-      :class-card: doc-card
-
-      Tutorials, examples, and best practices
 
    .. grid-item-card:: API Reference
       :link: api.html
       :class-card: doc-card
 
-      Complete API documentation and method signatures
+      Complete API documentation with all classes and methods
 ```
 
 ```{toctree}
 :hidden:
 :maxdepth: 2
 
-installation
-architecture
-usage
 api
 ```
