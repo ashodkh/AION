@@ -10,7 +10,7 @@
 
 **Polymathic's Large Omnimodal Model for Astronomy**
 
-[🚀 Quick Start](#-quick-start) • [🔬 Scientific Overview](#-scientific-overview) • [📚 Documentation](#-documentation) • [📦 Advanced Installation](#-advanced-installation) • [🤝 Contributing](#-contributing)
+[🚀 Quick Start](#-quick-start) • [🔬 Scientific Overview](#-scientific-overview) • [📦 Advanced Installation](#-advanced-installation) 
 
 </div>
 
