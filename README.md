@@ -77,6 +77,13 @@ preds = model(
 )
 ```
 
+## 🎓 Tutorials
+
+Start with our interactive tutorial:
+- **[Open in Google Colab](https://colab.research.google.com/github/PolymathicAI/AION/blob/main/notebooks/Tutorial.ipynb)** - Learn AION basics interactively, no local setup required!
+
+For detailed guides, see the [online documentation](https://polymathic-ai.github.io/AION/).
+
 ## 🔬 Scientific Overview
 
 ### 🧬 Architecture
@@ -199,13 +206,6 @@ predictions = model(
 )
 redshift_probs = torch.softmax(predictions['tok_z'], dim=-1)
 ```
-
-## 🎓 Tutorials
-
-Start with our interactive tutorial:
-- **[Open in Google Colab](https://colab.research.google.com/github/PolymathicAI/AION/blob/main/notebooks/Tutorial.ipynb)** - Learn AION basics interactively, no local setup required!
-
-For detailed guides, see the [online documentation](https://polymathic-ai.github.io/AION/).
 
 ## 📦 Advanced Installation
 
